@@ -1,0 +1,109 @@
+@import "tailwindcss";
+
+:root {
+  --font-arabic: 'Amiri', 'Scheherazade New', serif;
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+
+  /* Theme tokens - Light Mode */
+  --bg-primary: #fbfbf9;
+  --bg-surface: #ffffff;
+  --bg-subtle: #f4f4f0;
+  --bg-card: #ffffff;
+  --border-color: #e6e6de;
+  --border-subtle: #f0f0e8;
+
+  --text-primary: #1c1f1d;
+  --text-secondary: #525c56;
+  --text-muted: #7c8881;
+
+  /* Primary Emerald/Forest */
+  --primary: #155e42;
+  --primary-hover: #0f4833;
+  --primary-light: #ecfdf5;
+  --primary-border: #a7f3d0;
+
+  /* Subtle Warm Gold Accent */
+  --accent-gold: #b45309;
+  --accent-gold-light: #fef3c7;
+  --accent-gold-border: #fde68a;
+
+  /* Status Colors */
+  --status-success: #16a34a;
+  --status-success-bg: #dcfce7;
+  --status-pending: #d97706;
+  --status-pending-bg: #fef3c7;
+  --status-error: #dc2626;
+  --status-error-bg: #fee2e2;
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px -2px rgba(0, 0, 0, 0.06), 0 2px 6px -2px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 10px 25px -3px rgba(0, 0, 0, 0.08), 0 4px 10px -4px rgba(0, 0, 0, 0.04);
+}
+
+.dark {
+  /* Theme tokens - Dark Mode */
+  --bg-primary: #0f1412;
+  --bg-surface: #161e1b;
+  --bg-subtle: #1c2622;
+  --bg-card: #19221f;
+  --border-color: #27342f;
+  --border-subtle: #1f2a26;
+
+  --text-primary: #f3f5f4;
+  --text-secondary: #b1bdb7;
+  --text-muted: #798b83;
+
+  --primary: #22c55e;
+  --primary-hover: #16a34a;
+  --primary-light: #064e3b;
+  --primary-border: #065f46;
+
+  --accent-gold: #f59e0b;
+  --accent-gold-light: #451a03;
+  --accent-gold-border: #78350f;
+
+  --status-success: #22c55e;
+  --status-success-bg: #052e16;
+  --status-pending: #f59e0b;
+  --status-pending-bg: #451a03;
+  --status-error: #ef4444;
+  --status-error-bg: #450a0a;
+
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 14px 0 rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 28px 0 rgba(0, 0, 0, 0.5);
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.font-arabic {
+  font-family: var(--font-arabic);
+  direction: rtl;
+  text-align: right;
+  line-height: 2.2;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}

@@ -1,0 +1,6 @@
+{
+  "name": "Quran Mate",
+  "description": "Peer accountability platform for Muslims memorizing and revising the Quran. Pair with study partners, coordinate sessions, track daily check-ins and streaks, and explore verses with Ayah Finder.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
