@@ -1,7 +1,7 @@
 // Mobile Bottom Navigation
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Users, CalendarCheck, Flame, BookOpen, User } from 'lucide-react';
+import { Users, CalendarCheck, Flame, BookOpen, LayoutDashboard } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 
 export default function MobileNav() {
@@ -11,11 +11,11 @@ export default function MobileNav() {
   if (!user) return null;
 
   const items = [
+    { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
     { label: 'Qur\'an', path: '/quran', icon: BookOpen },
     { label: 'Tracker', path: '/tracker', icon: CalendarCheck },
     { label: 'My Mate', path: '/partnership', icon: Flame, isSpecial: !!activePartnershipId },
     { label: 'Discover', path: '/discover', icon: Users },
-    { label: 'Profile', path: '/profile', icon: User },
   ];
 
   return (

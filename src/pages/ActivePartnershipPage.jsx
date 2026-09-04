@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { api } from '../services/api.js';
 import { useAuth } from '../context/AuthContext.jsx';
+import SessionScheduler from '../components/SessionScheduler.jsx';
 
 export default function ActivePartnershipPage() {
   const { refreshProfile } = useAuth();
@@ -385,6 +386,13 @@ export default function ActivePartnershipPage() {
           </div>
         </div>
       </div>
+
+      {/* Peer Study Session Scheduling */}
+      <SessionScheduler
+        partnershipId={partnershipData.id}
+        defaultPartner={partner}
+        onSessionLogged={fetchPartnership}
+      />
 
       {/* Footer Settings & Graceful Unpair */}
       <div className="flex items-center justify-between pt-4 border-t border-[var(--border-color)]">

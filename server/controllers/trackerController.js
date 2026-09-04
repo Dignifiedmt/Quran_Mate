@@ -154,6 +154,49 @@ export async function getTrackerSummary(req, res) {
       logsCount: activeDateMap[d.date]?.count || 0,
     }));
 
+    // 7. Last 7 days breakdown for Recharts Weekly Progress Chart (Verses Memorized vs Reviewed)
+    const past7Days = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dStr = d.toISOString().split('T')[0];
+      const dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
+      past7Days.push({ date: dStr, dayName });
+    }
+
+    const past7Activity = await query(
+      `SELECT date, activity_type, SUM(ayahs_count) as ayahs, SUM(duration_minutes) as minutes
+       FROM daily_tracker_logs
+       WHERE user_id = ? AND date >= ?
+       GROUP BY date, activity_type`,
+      [userId, past7Days[0].date]
+    );
+
+    const past7Map = {};
+    for (const row of past7Activity) {
+      if (!past7Map[row.date]) {
+        past7Map[row.date] = { memorized: 0, reviewed: 0, minutes: 0 };
+      }
+      if (row.activity_type === 'hifz') {
+        past7Map[row.date].memorized += row.ayahs || 0;
+      } else {
+        past7Map[row.date].reviewed += row.ayahs || 0;
+      }
+      past7Map[row.date].minutes += row.minutes || 0;
+    }
+
+    const weeklyProgress = past7Days.map((d) => {
+      const entry = past7Map[d.date] || { memorized: 0, reviewed: 0, minutes: 0 };
+      return {
+        date: d.date,
+        day: d.dayName,
+        memorized: entry.memorized,
+        reviewed: entry.reviewed,
+        totalVerses: entry.memorized + entry.reviewed,
+        minutes: entry.minutes,
+      };
+    });
+
     return res.json({
       today: {
         date: todayStr,
@@ -172,6 +215,7 @@ export async function getTrackerSummary(req, res) {
       },
       activityCounts,
       weeklyGrid,
+      weeklyProgress,
       partnerInfo,
     });
   } catch (err) {

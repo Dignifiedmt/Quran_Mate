@@ -18,11 +18,17 @@ import {
   CheckCircle2,
   Bookmark,
   Search,
-  CalendarCheck
+  CalendarCheck,
+  Home,
+  LayoutDashboard,
+  Compass,
+  Layers,
+  Calendar
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useTheme } from '../context/ThemeContext.jsx';
 import BrandLogo from './BrandLogo.jsx';
+import AllScreensDirectory from './AllScreensDirectory.jsx';
 
 export default function Navbar() {
   const { user, logout, demoLogin, activePartnershipId } = useAuth();
@@ -32,6 +38,7 @@ export default function Navbar() {
 
   const [isProfilesOpen, setIsProfilesOpen] = useState(false);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
+  const [isAllScreensOpen, setIsAllScreensOpen] = useState(false);
 
   // Pre-seeded authentic learner accounts for testing without typing
   const learnerProfiles = [
@@ -46,23 +53,24 @@ export default function Navbar() {
     setIsProfilesOpen(false);
     setIsMobileDrawerOpen(false);
     await demoLogin(email);
-    navigate('/discover');
+    navigate('/dashboard');
   };
 
   const navLinks = [
-    { label: 'Noble Qur\'an', path: '/quran', icon: BookOpen, desc: 'Read, listen & reflect' },
-    { label: 'Ayah Finder', path: '/ayah-finder', icon: Search, desc: 'Search & thematic lookup' },
-    { label: 'Daily Tracker', path: '/tracker', icon: CalendarCheck, desc: 'Streaks & habit consistency' },
-    { label: 'Discover Mates', path: '/discover', icon: Users, desc: 'Find compatible partners' },
-    { label: 'Requests', path: '/requests', icon: Inbox, desc: 'Partner requests & invitations' },
+    { label: 'Home', path: '/home', icon: Home, desc: 'Public overview & features' },
+    { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, desc: 'Daily stats & goals' },
+    { label: 'Qur\'an', path: '/quran', icon: BookOpen, desc: '114 Surahs & audio recitation' },
+    { label: 'Ayah Finder', path: '/ayah-finder', icon: Search, desc: 'Thematic search & tafsir' },
+    { label: 'Tracker', path: '/tracker', icon: CalendarCheck, desc: 'Streaks & weekly chart' },
+    { label: 'Circles', path: '/groups', icon: Layers, desc: 'Collaborative rooms & Khatmah' },
+    { label: 'Find Mates', path: '/discover', icon: Users, desc: 'Find compatible partners' },
     {
-      label: 'Active Mate',
+      label: 'My Mate',
       path: '/partnership',
       icon: Flame,
       desc: 'Daily check-in & streaks',
       badge: activePartnershipId ? 'Active' : null,
     },
-    { label: 'My Profile', path: '/profile', icon: User, desc: 'Study schedule & goals' },
   ];
 
   const closeMobileMenu = () => setIsMobileDrawerOpen(false);
@@ -73,7 +81,7 @@ export default function Navbar() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           {/* Brand Logo & Title */}
           <Link
-            to={user ? '/discover' : '/'}
+            to={user ? '/dashboard' : '/home'}
             className="flex items-center gap-3 group focus:outline-none"
             onClick={closeMobileMenu}
           >
@@ -92,36 +100,46 @@ export default function Navbar() {
           </Link>
 
           {/* Desktop Navigation */}
-          {user && (
-            <nav className="hidden lg:flex items-center gap-1">
-              {navLinks.map((link) => {
-                const Icon = link.icon;
-                const isActive = location.pathname === link.path;
-                return (
-                  <Link
-                    key={link.path}
-                    to={link.path}
-                    className={`relative flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                      isActive
-                        ? 'bg-[var(--primary-light)] text-[var(--primary)] shadow-2xs'
-                        : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-subtle)]'
-                    }`}
-                  >
-                    <Icon className="w-3.5 h-3.5" />
-                    <span>{link.label}</span>
-                    {link.badge && (
-                      <span className="inline-flex items-center px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-amber-500 text-white animate-pulse">
-                        {link.badge}
-                      </span>
-                    )}
-                  </Link>
-                );
-              })}
-            </nav>
-          )}
+          <nav className="hidden lg:flex items-center gap-1">
+            {navLinks.map((link) => {
+              const Icon = link.icon;
+              const isActive =
+                location.pathname === link.path ||
+                (link.path === '/home' && (location.pathname === '/' || location.pathname === '/welcome'));
+              return (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  className={`relative flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                    isActive
+                      ? 'bg-[var(--primary-light)] text-[var(--primary)] shadow-2xs font-bold'
+                      : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-subtle)]'
+                  }`}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  <span>{link.label}</span>
+                  {link.badge && (
+                    <span className="inline-flex items-center px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-amber-500 text-white animate-pulse">
+                      {link.badge}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
+
+            {/* All Screens Dropdown Button */}
+            <button
+              onClick={() => setIsAllScreensOpen(true)}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-subtle)] border border-[var(--border-color)] transition-all ml-1"
+              title="Open full directory of all screens and features"
+            >
+              <Compass className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+              <span>All Screens</span>
+            </button>
+          </nav>
 
           {/* Right Action Bar */}
-          <div className="flex items-center gap-1.5 sm:gap-2.5">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             {/* Quick Profile Switcher (Clean, discreet) */}
             <div className="relative hidden sm:block">
               <button
@@ -302,6 +320,26 @@ export default function Navbar() {
                 </div>
               )}
 
+              {/* Quick Launch Buttons (Home, Dashboard, All Screens) */}
+              <div className="grid grid-cols-2 gap-2">
+                <Link
+                  to="/home"
+                  onClick={closeMobileMenu}
+                  className="p-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-subtle)] hover:bg-[var(--primary-light)] flex items-center gap-2 text-xs font-bold text-[var(--text-primary)]"
+                >
+                  <Home className="w-4 h-4 text-emerald-600" />
+                  <span>Main Home</span>
+                </Link>
+                <Link
+                  to="/dashboard"
+                  onClick={closeMobileMenu}
+                  className="p-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-subtle)] hover:bg-[var(--primary-light)] flex items-center gap-2 text-xs font-bold text-[var(--text-primary)]"
+                >
+                  <LayoutDashboard className="w-4 h-4 text-indigo-600" />
+                  <span>Dashboard</span>
+                </Link>
+              </div>
+
               {/* Navigation Links */}
               <div className="space-y-1">
                 <div className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider px-2 pt-1 pb-1">
@@ -309,7 +347,9 @@ export default function Navbar() {
                 </div>
                 {navLinks.map((link) => {
                   const Icon = link.icon;
-                  const isActive = location.pathname === link.path;
+                  const isActive =
+                    location.pathname === link.path ||
+                    (link.path === '/home' && (location.pathname === '/' || location.pathname === '/welcome'));
 
                   return (
                     <Link
@@ -366,6 +406,27 @@ export default function Navbar() {
                     </div>
                   </Link>
                 )}
+
+                {/* All Screens Directory trigger */}
+                <button
+                  onClick={() => {
+                    closeMobileMenu();
+                    setIsAllScreensOpen(true);
+                  }}
+                  className="w-full flex items-center justify-between p-2.5 rounded-xl text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-subtle)]"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600">
+                      <Compass className="w-4 h-4" />
+                    </div>
+                    <div className="text-left">
+                      <div className="text-xs font-semibold text-[var(--text-primary)]">All Screens Directory</div>
+                      <div className="text-[10px] text-[var(--text-muted)]">
+                        Browse all pages &amp; tools
+                      </div>
+                    </div>
+                  </div>
+                </button>
               </div>
 
               {/* Quick Profile Switching for Testing in Drawer */}
@@ -432,6 +493,12 @@ export default function Navbar() {
           </div>
         </div>
       )}
+
+      {/* All Screens Directory Modal */}
+      <AllScreensDirectory
+        isOpen={isAllScreensOpen}
+        onClose={() => setIsAllScreensOpen(false)}
+      />
     </>
   );
 }

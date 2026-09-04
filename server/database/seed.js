@@ -211,6 +211,92 @@ export async function seedDatabase() {
     [maryamId]
   );
 
+  // Seed 7 days of daily tracker logs for Maryam, Aisha, and Fatimah with Hifz & Muraja'ah
+  const past7DaysData = [
+    { daysAgo: 6, hifzAyahs: 5, hifzPortion: 'Surah Al-Mulk 1–5', murajaahAyahs: 15, murajaahPortion: 'Juz 30 (Al-Naba)' },
+    { daysAgo: 5, hifzAyahs: 6, hifzPortion: 'Surah Al-Mulk 6–11', murajaahAyahs: 20, murajaahPortion: 'Surah Al-Mulk 1–5 review' },
+    { daysAgo: 4, hifzAyahs: 4, hifzPortion: 'Surah Al-Mulk 12–15', murajaahAyahs: 18, murajaahPortion: 'Surah Al-Qalam 1–18' },
+    { daysAgo: 3, hifzAyahs: 7, hifzPortion: 'Surah Al-Mulk 16–22', murajaahAyahs: 25, murajaahPortion: 'Surah Al-Mulk 1–15' },
+    { daysAgo: 2, hifzAyahs: 8, hifzPortion: 'Surah Al-Mulk 23–30', murajaahAyahs: 30, murajaahPortion: 'Whole Surah Al-Mulk revision' },
+    { daysAgo: 1, hifzAyahs: 5, hifzPortion: 'Surah Al-Qalam 1–5', murajaahAyahs: 22, murajaahPortion: 'Surah Al-Haqqah 1–22' },
+    { daysAgo: 0, hifzAyahs: 6, hifzPortion: 'Surah Al-Qalam 6–11', murajaahAyahs: 28, murajaahPortion: 'Surah Al-Mulk & Al-Qalam' },
+  ];
+
+  for (const item of past7DaysData) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - item.daysAgo);
+    const dStr = d.toISOString().split('T')[0];
+
+    // Seed for Maryam
+    await run(
+      `INSERT INTO daily_tracker_logs (user_id, date, activity_type, portion_covered, pages_count, ayahs_count, duration_minutes, notes, completed)
+       VALUES (?, ?, 'hifz', ?, 1, ?, 25, 'Committed new ayahs to memory', 1)`,
+      [maryamId, dStr, item.hifzPortion, item.hifzAyahs]
+    );
+    await run(
+      `INSERT INTO daily_tracker_logs (user_id, date, activity_type, portion_covered, pages_count, ayahs_count, duration_minutes, notes, completed)
+       VALUES (?, ?, 'murajaah', ?, 2, ?, 20, 'Solidified revision with tartil', 1)`,
+      [maryamId, dStr, item.murajaahPortion, item.murajaahAyahs]
+    );
+
+    // Seed for Aisha
+    await run(
+      `INSERT INTO daily_tracker_logs (user_id, date, activity_type, portion_covered, pages_count, ayahs_count, duration_minutes, notes, completed)
+       VALUES (?, ?, 'hifz', ?, 1, ?, 30, 'Partner recitation check', 1)`,
+      [aishaId, dStr, item.hifzPortion, item.hifzAyahs + 2]
+    );
+    await run(
+      `INSERT INTO daily_tracker_logs (user_id, date, activity_type, portion_covered, pages_count, ayahs_count, duration_minutes, notes, completed)
+       VALUES (?, ?, 'murajaah', ?, 2, ?, 25, 'Reviewed mutashabihat', 1)`,
+      [aishaId, dStr, item.murajaahPortion, item.murajaahAyahs + 5]
+    );
+  }
+
+  // Seed realistic upcoming & completed study sessions
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowStr = tomorrow.toISOString().split('T')[0];
+
+  const in3Days = new Date(now);
+  in3Days.setDate(in3Days.getDate() + 3);
+  const in3DaysStr = in3Days.toISOString().split('T')[0];
+
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+  // Upcoming session between Aisha & Fatimah
+  await run(
+    `INSERT INTO study_sessions 
+      (partnership_id, creator_id, partner_id, title, session_date, start_time, duration_minutes, agenda, session_type, meeting_link, status)
+     VALUES (?, ?, ?, 'Surah Al-Mulk Cross-Recitation & Testing', ?, '18:30', 45, 'Listen to ayahs 1–30 with tartil and check tajweed rules for ikhfa and qalqalah.', 'murajaah', 'https://meet.jit.si/QuranMate-Aisha-Fatimah', 'scheduled')`,
+    [partnershipId, fatimahId, aishaId, tomorrowStr]
+  );
+
+  // In 3 days session
+  await run(
+    `INSERT INTO study_sessions 
+      (partnership_id, creator_id, partner_id, title, session_date, start_time, duration_minutes, agenda, session_type, meeting_link, status)
+     VALUES (?, ?, ?, 'Surah Al-Qalam Hifz Examination', ?, '19:00', 30, 'Test memorization of first 20 ayahs without looking.', 'hifz', 'https://meet.jit.si/QuranMate-Aisha-Fatimah-2', 'scheduled')`,
+    [partnershipId, aishaId, fatimahId, in3DaysStr]
+  );
+
+  // Past completed session
+  await run(
+    `INSERT INTO study_sessions 
+      (partnership_id, creator_id, partner_id, title, session_date, start_time, duration_minutes, agenda, session_type, meeting_link, status)
+     VALUES (?, ?, ?, 'Juz 29 Opening Review & Intention Setting', ?, '18:00', 40, 'Completed quarter juz review and recorded mutashabihat tips.', 'murajaah', 'https://meet.jit.si/QuranMate-Past-1', 'completed')`,
+    [partnershipId, fatimahId, aishaId, yesterdayStr]
+  );
+
+  // Schedule session invitation for Maryam
+  await run(
+    `INSERT INTO study_sessions 
+      (partnership_id, creator_id, partner_id, title, session_date, start_time, duration_minutes, agenda, session_type, meeting_link, status)
+     VALUES (NULL, ?, ?, 'Surah Al-Baqarah Ayahs 250–255 Revision', ?, '08:30', 30, 'Recite Ayat al-Kursi with full understanding and tajweed review.', 'hifz', 'https://meet.jit.si/QuranMate-Maryam-Study', 'scheduled')`,
+    [maryamId, zainabId, tomorrowStr]
+  );
+
   console.log('Demo data seeded successfully!');
 }
 

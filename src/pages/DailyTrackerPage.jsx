@@ -20,6 +20,8 @@ import {
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../services/api.js';
 import { useAuth } from '../context/AuthContext.jsx';
+import WeeklyProgressChart from '../components/WeeklyProgressChart.jsx';
+import SessionScheduler from '../components/SessionScheduler.jsx';
 
 export default function DailyTrackerPage() {
   const { user } = useAuth();
@@ -285,6 +287,9 @@ export default function DailyTrackerPage() {
         </div>
       </div>
 
+      {/* Weekly Progress Chart (Recharts) - Verses Memorized vs. Reviewed */}
+      <WeeklyProgressChart data={summary?.weeklyProgress} />
+
       {/* 14-Day Consistency Visual Heatmap */}
       {summary?.weeklyGrid && summary.weeklyGrid.length > 0 && (
         <div className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-surface)] p-5 shadow-xs space-y-3">
@@ -389,6 +394,13 @@ export default function DailyTrackerPage() {
           </button>
         </div>
       )}
+
+      {/* Peer Quran Study Session Scheduling */}
+      <SessionScheduler
+        partnershipId={summary?.partnerInfo?.id}
+        defaultPartner={summary?.partnerInfo?.partner}
+        onSessionLogged={loadTrackerData}
+      />
 
       {/* Main Form: Log Quran Session */}
       <div className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-surface)] p-5 sm:p-7 shadow-xs space-y-6">

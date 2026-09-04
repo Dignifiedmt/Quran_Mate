@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import BrandLogo from '../components/BrandLogo.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
+import BismillahHeader from '../components/BismillahHeader.jsx';
 
 export default function WelcomePage() {
   const { user, demoLogin } = useAuth();
@@ -74,13 +75,16 @@ export default function WelcomePage() {
           <span>Holy Qur&rsquo;an Recitation & Memorization Accountability</span>
         </div>
 
+        {/* Lazy Loaded Bismillah with Arabic Calligraphy & Translation */}
+        <BismillahHeader showTranslation={true} />
+
         {/* Main Headline */}
         <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold text-[var(--text-primary)] tracking-tight leading-[1.15]">
           Qur&rsquo;an Recitation &amp; Memorization <br />
           <span className="text-[var(--primary)]">with an Accountability Mate.</span>
         </h1>
 
-        {/* Subtitle directly from MVP Core Value Proposition */}
+        {/* Core Value Proposition */}
         <p className="max-w-2xl mx-auto text-sm sm:text-lg text-[var(--text-secondary)] leading-relaxed">
           &ldquo;Find someone else on the same journey, see when they&rsquo;re free, pair up, and keep each other accountable in recitation, revision, and daily consistency.&rdquo;
         </p>
@@ -113,69 +117,91 @@ export default function WelcomePage() {
           </Link>
         </div>
 
-        {/* Demo Walkthrough Box for Presentation & Judging (Directly from MVP criteria) */}
-        <div className="mt-8 p-5 sm:p-6 rounded-3xl border border-amber-200 dark:border-amber-900/60 bg-gradient-to-r from-amber-50/70 via-amber-50/40 to-emerald-50/50 dark:from-amber-950/20 dark:to-emerald-950/20 text-left shadow-xs">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-amber-200/70 dark:border-amber-900/40 pb-3 mb-4">
+        {/* Hero Visual Section: Holy Quran on Rehal with Soft Illumination */}
+        <div className="relative mx-auto max-w-4xl rounded-3xl overflow-hidden border border-emerald-200/80 dark:border-emerald-900/60 shadow-xl group mt-4">
+          <img
+            src="/src/assets/images/quran_hero_illustration_1788484620067.jpg"
+            alt="Holy Quran on carved wooden rehal with warm lighting and Islamic geometric motifs"
+            className="w-full h-64 sm:h-80 md:h-96 object-cover transform group-hover:scale-102 transition-transform duration-700"
+            referrerPolicy="no-referrer"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent flex flex-col justify-end p-6 sm:p-8 text-left text-white">
+            <div className="flex items-center gap-2 text-xs font-semibold text-emerald-300 mb-1">
+              <Sparkles className="w-4 h-4 text-amber-400" />
+              <span>Prophetic Tradition (Hadith):</span>
+            </div>
+            <p className="font-serif text-base sm:text-xl font-medium leading-snug drop-shadow-md">
+              &ldquo;The best of you are those who learn the Qur&rsquo;an and teach it.&rdquo;
+            </p>
+            <div className="text-[11px] sm:text-xs text-white/80 mt-1 font-mono">
+              — Sahih al-Bukhari 5027
+            </div>
+          </div>
+        </div>
+
+        {/* Guided Interactive Journey / Demo Profiles */}
+        <div className="mt-8 p-5 sm:p-6 rounded-3xl border border-emerald-200 dark:border-emerald-900/60 bg-gradient-to-r from-emerald-50/70 via-emerald-50/40 to-teal-50/50 dark:from-emerald-950/20 dark:to-teal-950/20 text-left shadow-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-emerald-200/70 dark:border-emerald-900/40 pb-3 mb-4">
             <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse" />
-              <h3 className="text-xs sm:text-sm font-bold text-amber-950 dark:text-amber-200">
-                Hackathon Demo Testing Mode (3-Step Judge Flow)
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+              <h3 className="text-xs sm:text-sm font-bold text-emerald-950 dark:text-emerald-200">
+                Explore Learner Profiles &amp; Sisterhood Journeys
               </h3>
             </div>
-            <span className="text-[11px] text-amber-800 dark:text-amber-300 font-medium">
-              Switch profiles instantly with 1 click:
+            <span className="text-[11px] text-emerald-800 dark:text-emerald-300 font-medium">
+              Experience the app from different learner perspectives:
             </span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <button
               onClick={() => handleQuickDemoLogin('maryam@quranmate.demo', '/discover')}
-              className="p-3 rounded-2xl border border-amber-200 dark:border-amber-800 bg-white/80 dark:bg-zinc-900/80 hover:border-[var(--primary)] text-left transition-all shadow-2xs group"
+              className="p-3 rounded-2xl border border-emerald-200 dark:border-emerald-800 bg-white/80 dark:bg-zinc-900/80 hover:border-[var(--primary)] text-left transition-all shadow-2xs group"
             >
               <div className="flex items-center justify-between mb-1">
                 <span className="text-xs font-bold text-[var(--text-primary)] group-hover:text-[var(--primary)]">
-                  Step 1: Maryam Al-Fassi
+                  Maryam Al-Fassi
                 </span>
                 <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-200 font-semibold">
                   Juz 1–5
                 </span>
               </div>
               <p className="text-[11px] text-[var(--text-muted)]">
-                Browse learners, view Fatima&rsquo;s availability, send a partner request.
+                Browse learners, view Fatima&rsquo;s availability, and send a study partner request.
               </p>
             </button>
 
             <button
               onClick={() => handleQuickDemoLogin('fatimah@quranmate.demo', '/requests')}
-              className="p-3 rounded-2xl border border-amber-200 dark:border-amber-800 bg-white/80 dark:bg-zinc-900/80 hover:border-[var(--primary)] text-left transition-all shadow-2xs group"
+              className="p-3 rounded-2xl border border-emerald-200 dark:border-emerald-800 bg-white/80 dark:bg-zinc-900/80 hover:border-[var(--primary)] text-left transition-all shadow-2xs group"
             >
               <div className="flex items-center justify-between mb-1">
                 <span className="text-xs font-bold text-[var(--text-primary)] group-hover:text-[var(--primary)]">
-                  Step 2: Fatima Zahra
+                  Fatimah Zahra
                 </span>
                 <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-200 font-semibold">
                   Revision
                 </span>
               </div>
               <p className="text-[11px] text-[var(--text-muted)]">
-                Open Requests, accept incoming partner invitation, view active match.
+                Manage partner invitations, review requests, and coordinate mutual revision.
               </p>
             </button>
 
             <button
               onClick={() => handleQuickDemoLogin('aisha@quranmate.demo', '/partnership')}
-              className="p-3 rounded-2xl border border-amber-200 dark:border-amber-800 bg-white/80 dark:bg-zinc-900/80 hover:border-[var(--primary)] text-left transition-all shadow-2xs group"
+              className="p-3 rounded-2xl border border-emerald-200 dark:border-emerald-800 bg-white/80 dark:bg-zinc-900/80 hover:border-[var(--primary)] text-left transition-all shadow-2xs group"
             >
               <div className="flex items-center justify-between mb-1">
                 <span className="text-xs font-bold text-[var(--text-primary)] group-hover:text-[var(--primary)]">
-                  Step 3: Shared Partnership
+                  Active Partnership
                 </span>
                 <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-teal-100 dark:bg-teal-900/50 text-teal-800 dark:text-teal-200 font-semibold">
-                  Active
+                  Paired Room
                 </span>
               </div>
               <p className="text-[11px] text-[var(--text-muted)]">
-                Mutual goal, daily check-in button, streak counter, and partner chat.
+                Shared memorization goal, daily dual check-ins, streak counter, and partner discussion.
               </p>
             </button>
           </div>
@@ -240,14 +266,14 @@ export default function WelcomePage() {
         </div>
       </section>
 
-      {/* The 7 MVP Features Grid (Direct translation of the attached Hackathon MVP Document) */}
+      {/* Features Overview Grid */}
       <section className="py-12 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto border-t border-[var(--border-color)]">
         <div className="text-center max-w-2xl mx-auto mb-10">
           <h2 className="text-2xl sm:text-3xl font-extrabold text-[var(--text-primary)]">
-            Built Strictly to the Hackathon MVP Scope
+            Comprehensive Qur&rsquo;anic Companionship Platform
           </h2>
           <p className="text-xs sm:text-sm text-[var(--text-secondary)] mt-2">
-            Every core feature designed to solve the Quran memorization consistency problem without unnecessary complexity.
+            Every feature thoughtfully designed to cultivate steadfast Quran recitation, mutual revision, and lifelong sisterhood in the book of Allah.
           </p>
         </div>
 
@@ -336,7 +362,7 @@ export default function WelcomePage() {
               <div className="space-y-1">
                 <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[var(--primary)]">
                   <MessageSquare className="w-3.5 h-3.5" />
-                  <span>Feature 07 &bull; Partner Messaging + Dedicated Qur&rsquo;an &amp; Ayah Reader</span>
+                  <span>Partner Messaging &bull; Dedicated Qur&rsquo;an &amp; Ayah Reader</span>
                 </div>
                 <h3 className="text-sm font-bold text-[var(--text-primary)]">
                   Coordinate Sessions, Recite Together, and Study the Qur&rsquo;an
@@ -359,7 +385,7 @@ export default function WelcomePage() {
 
       {/* Footer */}
       <footer className="py-6 border-t border-[var(--border-color)] text-center text-xs text-[var(--text-muted)]">
-        <p>Quran Mate &bull; Peer Quran Recitation &amp; Memorization Accountability &bull; Hackathon MVP</p>
+        <p>Quran Mate &bull; Dedicated to empowering believers in memorizing, revising, and living the Noble Qur&rsquo;an together &bull; Built with Ihsan</p>
       </footer>
     </div>
   );

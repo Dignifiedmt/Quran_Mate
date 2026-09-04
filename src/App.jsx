@@ -19,6 +19,9 @@ import QuranPage from './pages/QuranPage.jsx';
 import AyahFinderPage from './pages/AyahFinderPage.jsx';
 import DailyTrackerPage from './pages/DailyTrackerPage.jsx';
 import MyProfilePage from './pages/MyProfilePage.jsx';
+import DashboardPage from './pages/DashboardPage.jsx';
+import GroupsDirectoryPage from './pages/GroupsDirectoryPage.jsx';
+import GroupRoomPage from './pages/GroupRoomPage.jsx';
 
 // Protected Route Guard
 function ProtectedRoute({ children }) {
@@ -53,23 +56,47 @@ export default function App() {
       {/* Main Content */}
       <main className="flex-1 pb-16 sm:pb-0">
         <Routes>
-          {/* Public or Conditional Routes */}
+          {/* Public or Accessible Home Routes */}
           <Route
             path="/"
-            element={user ? <Navigate to="/discover" replace /> : <WelcomePage />}
+            element={user ? <Navigate to="/dashboard" replace /> : <WelcomePage />}
           />
+          <Route path="/home" element={<WelcomePage />} />
+          <Route path="/welcome" element={<WelcomePage />} />
           <Route
             path="/login"
-            element={user ? <Navigate to="/discover" replace /> : <LoginPage />}
+            element={user ? <Navigate to="/dashboard" replace /> : <LoginPage />}
           />
           <Route
             path="/register"
             element={user ? <Navigate to="/profile/setup" replace /> : <RegisterPage />}
           />
 
+          {/* Main Learner Dashboard */}
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
+
           {/* Holy Qur'an Suite & Ayah Finder */}
           <Route path="/quran" element={<QuranPage />} />
           <Route path="/ayah-finder" element={<AyahFinderPage />} />
+
+          {/* Collaborative Circles & Group Halaqah Rooms */}
+          <Route path="/groups" element={<GroupsDirectoryPage />} />
+          <Route path="/circles" element={<Navigate to="/groups" replace />} />
+          <Route
+            path="/groups/:id"
+            element={
+              <ProtectedRoute>
+                <GroupRoomPage />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Daily Quran Habit Tracker */}
           <Route

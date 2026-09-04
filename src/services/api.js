@@ -116,4 +116,30 @@ export const api = {
     request('/tracker/logs', { method: 'POST', body: JSON.stringify(payload) }),
   deleteTrackerLog: (id) =>
     request(`/tracker/logs/${id}`, { method: 'DELETE' }),
+
+  // Peer Session Scheduling
+  getSessions: () => request('/sessions'),
+  createSession: (payload) =>
+    request('/sessions', { method: 'POST', body: JSON.stringify(payload) }),
+  updateSession: (id, payload) =>
+    request(`/sessions/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
+  deleteSession: (id) =>
+    request(`/sessions/${id}`, { method: 'DELETE' }),
+
+  // Group Study Circles & Collaborative Halaqahs
+  getGroups: (params = {}) => {
+    const query = new URLSearchParams();
+    if (params.category) query.set('category', params.category);
+    if (params.search) query.set('search', params.search);
+    return request(`/groups?${query.toString()}`);
+  },
+  getGroupById: (id) => request(`/groups/${id}`),
+  createGroup: (payload) =>
+    request('/groups', { method: 'POST', body: JSON.stringify(payload) }),
+  joinGroup: (id) => request(`/groups/${id}/join`, { method: 'POST' }),
+  leaveGroup: (id) => request(`/groups/${id}/leave`, { method: 'POST' }),
+  postGroupMessage: (id, payload) =>
+    request(`/groups/${id}/messages`, { method: 'POST', body: JSON.stringify(payload) }),
+  updateGroupKhatmah: (id, payload) =>
+    request(`/groups/${id}/khatmah`, { method: 'POST', body: JSON.stringify(payload) }),
 };

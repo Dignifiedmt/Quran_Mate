@@ -8,6 +8,8 @@ import partnershipRoutes from './routes/partnershipRoutes.js';
 import quranRoutes from './routes/quranRoutes.js';
 import imageRoutes from './routes/imageRoutes.js';
 import trackerRoutes from './routes/trackerRoutes.js';
+import sessionRoutes from './routes/sessionRoutes.js';
+import groupRoutes from './routes/groupRoutes.js';
 
 export function createApp() {
   const app = express();
@@ -34,6 +36,8 @@ export function createApp() {
   app.use('/api/quran', quranRoutes);
   app.use('/api/images', imageRoutes);
   app.use('/api/tracker', trackerRoutes);
+  app.use('/api/sessions', sessionRoutes);
+  app.use('/api/groups', groupRoutes);
 
   return app;
 }
