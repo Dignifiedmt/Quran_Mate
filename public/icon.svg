@@ -1,0 +1,58 @@
+<svg viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg" width="512" height="512">
+  <defs>
+    <linearGradient id="logoBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#059669" />
+      <stop offset="50%" stop-color="#047857" />
+      <stop offset="100%" stop-color="#134e4a" />
+    </linearGradient>
+    <radialGradient id="logoGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fde047" stop-opacity="0.3" />
+      <stop offset="100%" stop-color="#047857" stop-opacity="0" />
+    </radialGradient>
+    <filter id="logoShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#022c22" flood-opacity="0.4" />
+    </filter>
+  </defs>
+
+  <!-- Container Box -->
+  <rect width="512" height="512" rx="112" fill="url(#logoBg)" stroke="#34d399" stroke-opacity="0.35" stroke-width="6" />
+  <circle cx="256" cy="256" r="230" fill="url(#logoGlow)" pointer-events="none" />
+
+  <!-- Logo Graphics (Scaled from original 64x64) -->
+  <g transform="translate(48, 48) scale(6.5)" filter="url(#logoShadow)">
+    <!-- Crescent Moon -->
+    <path
+      d="M37 6 C42 6, 48 10, 50 16 C45 14, 38 17, 37 23 C36 27, 39 31, 44 32 C39 35, 31 34, 27 28 C23 22, 25 12, 33 7 C34.3 6.3, 35.6 6, 37 6 Z"
+      fill="#fef08a"
+    />
+    <!-- 8-Pointed Star -->
+    <polygon
+      points="49,11 50.5,13.5 53,14 51,16 51.5,18.5 49,17.5 46.5,18.5 47,16 45,14 47.5,13.5"
+      fill="#fef08a"
+    />
+    <!-- Open Quran Left Page -->
+    <path
+      d="M32 37 C24 35, 14 36, 9 40 L9 26 C15 22, 24 22, 32 25 Z"
+      fill="#f8fafc"
+      stroke="#cbd5e1"
+      stroke-width="0.8"
+    />
+    <!-- Open Quran Right Page -->
+    <path
+      d="M32 37 C40 35, 50 36, 55 40 L55 26 C49 22, 40 22, 32 25 Z"
+      fill="#f1f5f9"
+      stroke="#cbd5e1"
+      stroke-width="0.8"
+    />
+    <!-- Wooden Rehal Base -->
+    <path
+      d="M16 43 L32 54 L48 43"
+      stroke="#b45309"
+      stroke-width="2.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <path d="M23 48 L14 56" stroke="#92400e" stroke-width="2.5" stroke-linecap="round" />
+    <path d="M41 48 L50 56" stroke="#92400e" stroke-width="2.5" stroke-linecap="round" />
+  </g>
+</svg>

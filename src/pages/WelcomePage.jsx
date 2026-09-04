@@ -23,6 +23,7 @@ import {
 import BrandLogo from '../components/BrandLogo.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import BismillahHeader from '../components/BismillahHeader.jsx';
+import PWAInstallButton from '../components/PWAInstallButton.jsx';
 
 export default function WelcomePage() {
   const { user, demoLogin } = useAuth();
@@ -31,6 +32,19 @@ export default function WelcomePage() {
   // Interactive Live Quran Recitation Sample on Homepage
   const [isPlayingRecitation, setIsPlayingRecitation] = useState(false);
   const audioRef = useRef(null);
+
+  // Hero section Qur'an image with primary external link and robust local fallbacks
+  const heroQuranSources = [
+    'https://www.citypng.com/public/uploads/preview/-51616604772ltayg1w4ym.png',
+    '/quran-fallback.png',
+    '/quran-hero-alt.jpg',
+    '/src/assets/images/quran_hero_illustration_1788484620067.jpg',
+  ];
+  const [heroImgIndex, setHeroImgIndex] = useState(0);
+
+  const handleHeroImgError = () => {
+    setHeroImgIndex((prev) => (prev < heroQuranSources.length - 1 ? prev + 1 : prev));
+  };
 
   const sampleAyah = {
     ref: 'Surah Al-Baqarah 2:255 (Ayat al-Kursi)',
@@ -115,26 +129,36 @@ export default function WelcomePage() {
             <CalendarCheck className="w-4 h-4 text-emerald-600" />
             <span>Daily Tracker</span>
           </Link>
+
+          <PWAInstallButton className="w-full sm:w-auto px-5 py-3.5" />
         </div>
 
         {/* Hero Visual Section: Holy Quran on Rehal with Soft Illumination */}
-        <div className="relative mx-auto max-w-4xl rounded-3xl overflow-hidden border border-emerald-200/80 dark:border-emerald-900/60 shadow-xl group mt-4">
-          <img
-            src="/src/assets/images/quran_hero_illustration_1788484620067.jpg"
-            alt="Holy Quran on carved wooden rehal with warm lighting and Islamic geometric motifs"
-            className="w-full h-64 sm:h-80 md:h-96 object-cover transform group-hover:scale-102 transition-transform duration-700"
-            referrerPolicy="no-referrer"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent flex flex-col justify-end p-6 sm:p-8 text-left text-white">
-            <div className="flex items-center gap-2 text-xs font-semibold text-emerald-300 mb-1">
-              <Sparkles className="w-4 h-4 text-amber-400" />
-              <span>Prophetic Tradition (Hadith):</span>
-            </div>
-            <p className="font-serif text-base sm:text-xl font-medium leading-snug drop-shadow-md">
-              &ldquo;The best of you are those who learn the Qur&rsquo;an and teach it.&rdquo;
-            </p>
-            <div className="text-[11px] sm:text-xs text-white/80 mt-1 font-mono">
-              — Sahih al-Bukhari 5027
+        <div className="relative mx-auto max-w-4xl rounded-3xl overflow-hidden border border-emerald-200/80 dark:border-emerald-900/60 shadow-xl group mt-4 bg-gradient-to-br from-emerald-950 via-emerald-900 to-teal-950 text-white min-h-[340px] sm:min-h-[400px] flex items-center justify-center p-6 sm:p-10">
+          {/* Radiant gold ambient lighting */}
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(250,204,21,0.22),transparent_65%)] pointer-events-none" />
+          <div className="absolute inset-0 bg-emerald-950/30 pointer-events-none" />
+
+          <div className="relative z-10 flex flex-col items-center text-center max-w-2xl py-4">
+            <img
+              src={heroQuranSources[heroImgIndex]}
+              onError={handleHeroImgError}
+              alt="Holy Qur'an"
+              className="max-h-56 sm:max-h-72 w-auto object-contain filter drop-shadow-[0_20px_35px_rgba(0,0,0,0.65)] transform group-hover:scale-105 transition-transform duration-700 select-none"
+              referrerPolicy="no-referrer"
+              loading="eager"
+            />
+            <div className="mt-5">
+              <div className="inline-flex items-center gap-2 text-xs font-semibold text-emerald-300 mb-2 px-3 py-1 rounded-full bg-emerald-900/80 border border-emerald-500/40 shadow-xs backdrop-blur-xs">
+                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                <span>Prophetic Tradition (Hadith)</span>
+              </div>
+              <p className="font-serif text-base sm:text-xl font-medium leading-snug drop-shadow-md text-amber-100">
+                &ldquo;The best of you are those who learn the Qur&rsquo;an and teach it.&rdquo;
+              </p>
+              <div className="text-[11px] sm:text-xs text-emerald-200/85 mt-1.5 font-mono">
+                — Sahih al-Bukhari 5027
+              </div>
             </div>
           </div>
         </div>

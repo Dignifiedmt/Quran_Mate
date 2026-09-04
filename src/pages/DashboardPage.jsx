@@ -26,6 +26,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { api } from '../services/api.js';
 import BismillahHeader from '../components/BismillahHeader.jsx';
 import { SCREEN_SECTIONS } from '../components/AllScreensDirectory.jsx';
+import BrandLogo from '../components/BrandLogo.jsx';
 
 export default function DashboardPage() {
   const { user, activePartnershipId } = useAuth();
@@ -82,18 +83,21 @@ export default function DashboardPage() {
       {/* Top Welcome Header */}
       <div className="relative rounded-3xl border border-[var(--border-color)] bg-[var(--bg-surface)] p-6 sm:p-8 shadow-xs overflow-hidden">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2">
-            <BismillahHeader showTranslation={false} className="py-0 mb-1" />
-            <div className="flex items-center gap-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Learner Command Center &bull; {todayDateFormatted}</span>
+          <div className="flex items-start gap-4">
+            <BrandLogo size="lg" className="shrink-0 hidden sm:flex mt-1 rounded-2xl shadow-md" />
+            <div className="space-y-2">
+              <BismillahHeader showTranslation={false} className="py-0 mb-1" />
+              <div className="flex items-center gap-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Learner Command Center &bull; {todayDateFormatted}</span>
+              </div>
+              <h1 className="text-2xl sm:text-4xl font-extrabold text-[var(--text-primary)] tracking-tight">
+                Assalamu Alaikum, {user?.name ? user.name.split(' ')[0] : 'Sister'}!
+              </h1>
+              <p className="text-sm text-[var(--text-secondary)] max-w-xl">
+                May Allah bless your recitation, expand your heart with the Qur&rsquo;an, and grant you steadfast consistency in your Hifz journey today.
+              </p>
             </div>
-            <h1 className="text-2xl sm:text-4xl font-extrabold text-[var(--text-primary)] tracking-tight">
-              Assalamu Alaikum, {user?.name ? user.name.split(' ')[0] : 'Sister'}!
-            </h1>
-            <p className="text-sm text-[var(--text-secondary)] max-w-xl">
-              May Allah bless your recitation, expand your heart with the Qur&rsquo;an, and grant you steadfast consistency in your Hifz journey today.
-            </p>
           </div>
 
           {/* Quick Action Buttons */}

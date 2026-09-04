@@ -23,9 +23,11 @@ import {
   CheckCircle2,
   Sparkles,
   Calendar,
-  Layers
+  Layers,
+  Smartphone
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
+import { usePWAInstall } from '../hooks/usePWAInstall.js';
 
 export const SCREEN_SECTIONS = [
   {
@@ -142,17 +144,37 @@ export const SCREEN_SECTIONS = [
         badge: 'Wizard',
         color: 'text-cyan-600 dark:text-cyan-400 bg-cyan-50 dark:bg-cyan-950/40 border-cyan-200 dark:border-cyan-800',
       },
+      {
+        name: 'Install Mobile App (PWA)',
+        path: '#install-pwa',
+        icon: Smartphone,
+        description: 'Install Quran Mate on your phone like the 3MTT app with offline caching and home screen launch',
+        badge: '3MTT Style PWA',
+        color: 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800',
+      },
     ],
   },
 ];
 
 export default function AllScreensDirectory({ isOpen, onClose }) {
   const { activePartnershipId } = useAuth();
+  const { install, isInstallable } = usePWAInstall();
   const navigate = useNavigate();
 
   if (!isOpen) return null;
 
-  const handleNavigate = (path) => {
+  const handleNavigate = async (path) => {
+    if (path === '#install-pwa') {
+      onClose();
+      if (isInstallable) {
+        await install();
+      } else {
+        // Trigger session storage so banner opens if dismissed
+        sessionStorage.removeItem('quran_mate_pwa_dismissed');
+        window.dispatchEvent(new CustomEvent('pwa-open-guide'));
+      }
+      return;
+    }
     onClose();
     navigate(path);
   };

@@ -29,6 +29,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { useTheme } from '../context/ThemeContext.jsx';
 import BrandLogo from './BrandLogo.jsx';
 import AllScreensDirectory from './AllScreensDirectory.jsx';
+import PWAInstallButton from './PWAInstallButton.jsx';
 
 export default function Navbar() {
   const { user, logout, demoLogin, activePartnershipId } = useAuth();
@@ -180,6 +181,9 @@ export default function Navbar() {
               )}
             </div>
 
+            {/* PWA Install Button (3MTT App Style) */}
+            <PWAInstallButton className="hidden md:flex" />
+
             {/* Dark / Light Mode Toggle */}
             <button
               onClick={toggleTheme}
@@ -319,6 +323,25 @@ export default function Navbar() {
                   </div>
                 </div>
               )}
+
+              {/* Install Mobile App Banner (3MTT App Style) */}
+              <div className="p-3.5 rounded-2xl bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/60 dark:to-teal-950/40 border border-emerald-300 dark:border-emerald-800 space-y-2.5">
+                <div className="flex items-center gap-2.5">
+                  <BrandLogo size="xs" />
+                  <div>
+                    <div className="text-xs font-bold text-[var(--text-primary)] flex items-center gap-1.5">
+                      <span>Install Quran Mate App</span>
+                      <span className="text-[9px] font-extrabold uppercase px-1 py-0.2 rounded bg-emerald-600 text-white">
+                        PWA
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-[var(--text-muted)]">
+                      Instant launch on home screen, offline mode
+                    </p>
+                  </div>
+                </div>
+                <PWAInstallButton variant="full" />
+              </div>
 
               {/* Quick Launch Buttons (Home, Dashboard, All Screens) */}
               <div className="grid grid-cols-2 gap-2">

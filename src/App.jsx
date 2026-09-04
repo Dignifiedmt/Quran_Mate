@@ -4,6 +4,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext.jsx';
 import Navbar from './components/Navbar.jsx';
 import MobileNav from './components/MobileNav.jsx';
+import PWAInstallBanner from './components/PWAInstallBanner.jsx';
 
 // Pages
 import WelcomePage from './pages/WelcomePage.jsx';
@@ -174,6 +175,9 @@ export default function App() {
 
       {/* Mobile Bottom Navigation */}
       <MobileNav />
+
+      {/* PWA Phone Install Prompt Banner (like 3MTT Mobile App) */}
+      <PWAInstallBanner />
     </div>
   );
 }
