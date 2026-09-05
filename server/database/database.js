@@ -15,34 +15,33 @@ function getDbPath() {
     if (envPath.startsWith('sqlite://')) {
       envPath = envPath.replace(/^sqlite:\/\//, '');
     }
-    if (envPath) {
-      try {
-        const resolved = path.resolve(envPath);
-        const dir = path.dirname(resolved);
-        if (!fs.existsSync(dir)) {
-          fs.mkdirSync(dir, { recursive: true });
-        }
-        // Test writability to guarantee persistence succeeds
-        const testFile = path.join(dir, `.test_write_${Date.now()}`);
-        fs.writeFileSync(testFile, 'ok');
-        fs.unlinkSync(testFile);
-        return resolved;
-      } catch (err) {
-        console.warn(`Cannot write to SQLITE_PATH destination "${envPath}" (${err.message}). Falling back to local workspace database.`);
+  }
+
+  const baseName = envPath ? path.basename(envPath) : 'app.db';
+  const candidates = [];
+  if (envPath) {
+    candidates.push(path.resolve(envPath));
+  }
+  candidates.push(path.resolve(process.cwd(), baseName));
+  candidates.push(path.resolve(process.cwd(), 'quran_mate.sqlite'));
+  candidates.push(path.resolve('/tmp', baseName));
+
+  for (const candidate of candidates) {
+    try {
+      const dir = path.dirname(candidate);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
       }
+      const testFile = path.join(dir, `.test_write_${Date.now()}`);
+      fs.writeFileSync(testFile, 'ok');
+      fs.unlinkSync(testFile);
+      return candidate;
+    } catch {
+      // Try next candidate
     }
   }
 
-  // Primary local fallback
-  const localPath = path.resolve(process.cwd(), 'quran_mate.sqlite');
-  try {
-    const testFile = path.resolve(process.cwd(), `.test_write_${Date.now()}`);
-    fs.writeFileSync(testFile, 'ok');
-    fs.unlinkSync(testFile);
-    return localPath;
-  } catch (err) {
-    return path.resolve('/tmp', 'quran_mate.sqlite');
-  }
+  return path.resolve(process.cwd(), 'quran_mate.sqlite');
 }
 
 const DB_PATH = getDbPath();
