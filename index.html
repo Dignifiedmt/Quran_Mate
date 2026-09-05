@@ -4,6 +4,20 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Quran Mate - Peer Accountability Platform</title>
+    <script>
+      // Gracefully filter out benign [vite] websocket connection warnings in iframe/sandboxed environments
+      (function() {
+        var originalError = console.error;
+        console.error = function() {
+          var firstArg = arguments[0];
+          if (typeof firstArg === 'string' && (firstArg.indexOf('[vite] failed to connect') !== -1 || firstArg.startsWith('[vite]'))) {
+            if (console.debug) console.debug.apply(console, arguments);
+            return;
+          }
+          return originalError.apply(console, arguments);
+        };
+      })();
+    </script>
     <meta name="description" content="Peer accountability platform for Muslims memorizing and revising the Quran. Pair with study partners, coordinate sessions, track daily check-ins and streaks, and explore verses with Ayah Finder." />
     <meta property="og:title" content="Quran Mate - Peer Accountability Platform" />
     <meta property="og:description" content="Peer accountability platform for Muslims memorizing and revising the Quran. Pair with study partners, coordinate sessions, track daily check-ins and streaks, and explore verses with Ayah Finder." />

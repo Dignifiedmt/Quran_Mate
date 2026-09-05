@@ -1,5 +1,6 @@
 // Quran Mate 🌙 Full-Stack Server Entry Point
 import path from 'path';
+import http from 'http';
 import express from 'express';
 import { fileURLToPath } from 'url';
 import { createApp } from './server/app.js';
@@ -22,14 +23,19 @@ async function startServer() {
     console.error('Database initialization error:', err);
   }
 
-  // 2. Instantiate Express App
+  // 2. Instantiate Express App and HTTP server
   const app = createApp();
+  const server = http.createServer(app);
 
   // 3. Mount Frontend Handling (Vite in Dev, Static Files in Production)
   if (process.env.NODE_ENV !== 'production') {
     const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
-      server: { middlewareMode: true, allowedHosts: true },
+      server: {
+        middlewareMode: true,
+        allowedHosts: true,
+        hmr: { server },
+      },
       appType: 'spa',
     });
     app.use(vite.middlewares);
@@ -42,7 +48,7 @@ async function startServer() {
   }
 
   // 4. Start HTTP Server
-  app.listen(PORT, HOST, () => {
+  server.listen(PORT, HOST, () => {
     console.log(`Quran Mate 🌙 server running on http://${HOST}:${PORT}`);
   });
 }

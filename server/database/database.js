@@ -7,7 +7,15 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const DB_PATH = process.env.SQLITE_PATH || path.resolve(process.cwd(), 'quran_mate.sqlite');
+function getDbPath() {
+  const envPath = process.env.SQLITE_PATH;
+  if (envPath && !envPath.includes('://')) {
+    return path.resolve(envPath);
+  }
+  return path.resolve(process.cwd(), 'quran_mate.sqlite');
+}
+
+const DB_PATH = getDbPath();
 
 let dbInstance = null;
 
