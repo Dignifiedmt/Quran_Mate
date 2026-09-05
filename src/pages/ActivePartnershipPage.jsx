@@ -14,7 +14,8 @@ import {
   XCircle,
   HelpCircle,
   Video,
-  ExternalLink
+  ExternalLink,
+  HeartHandshake
 } from 'lucide-react';
 import { api } from '../services/api.js';
 import { useAuth } from '../context/AuthContext.jsx';
