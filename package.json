@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "node server.js",
-    "build": "vite build",
+    "build": "node scripts/patch-vite-pwa.js && vite build",
     "start": "node server.js",
     "preview": "vite preview",
     "clean": "rm -rf dist",

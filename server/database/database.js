@@ -8,11 +8,41 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 function getDbPath() {
-  const envPath = process.env.SQLITE_PATH;
-  if (envPath && !envPath.includes('://')) {
-    return path.resolve(envPath);
+  let envPath = process.env.SQLITE_PATH;
+  if (envPath && typeof envPath === 'string') {
+    envPath = envPath.trim();
+    // Normalize SQLite URI if provided (e.g., sqlite:///app.db or sqlite://app.db)
+    if (envPath.startsWith('sqlite://')) {
+      envPath = envPath.replace(/^sqlite:\/\//, '');
+    }
+    if (envPath) {
+      try {
+        const resolved = path.resolve(envPath);
+        const dir = path.dirname(resolved);
+        if (!fs.existsSync(dir)) {
+          fs.mkdirSync(dir, { recursive: true });
+        }
+        // Test writability to guarantee persistence succeeds
+        const testFile = path.join(dir, `.test_write_${Date.now()}`);
+        fs.writeFileSync(testFile, 'ok');
+        fs.unlinkSync(testFile);
+        return resolved;
+      } catch (err) {
+        console.warn(`Cannot write to SQLITE_PATH destination "${envPath}" (${err.message}). Falling back to local workspace database.`);
+      }
+    }
   }
-  return path.resolve(process.cwd(), 'quran_mate.sqlite');
+
+  // Primary local fallback
+  const localPath = path.resolve(process.cwd(), 'quran_mate.sqlite');
+  try {
+    const testFile = path.resolve(process.cwd(), `.test_write_${Date.now()}`);
+    fs.writeFileSync(testFile, 'ok');
+    fs.unlinkSync(testFile);
+    return localPath;
+  } catch (err) {
+    return path.resolve('/tmp', 'quran_mate.sqlite');
+  }
 }
 
 const DB_PATH = getDbPath();
@@ -28,7 +58,20 @@ export async function getDb() {
     const fileBuffer = fs.readFileSync(DB_PATH);
     dbInstance = new SQL.Database(fileBuffer);
   } else {
-    dbInstance = new SQL.Database();
+    // If DB_PATH is newly targeted (e.g. /app.db), check if seeded quran_mate.sqlite exists to retain all user/demo data
+    const localSeedDb = path.resolve(process.cwd(), 'quran_mate.sqlite');
+    if (DB_PATH !== localSeedDb && fs.existsSync(localSeedDb)) {
+      try {
+        const fileBuffer = fs.readFileSync(localSeedDb);
+        dbInstance = new SQL.Database(fileBuffer);
+        const data = dbInstance.export();
+        fs.writeFileSync(DB_PATH, Buffer.from(data));
+      } catch (e) {
+        dbInstance = new SQL.Database();
+      }
+    } else {
+      dbInstance = new SQL.Database();
+    }
   }
 
   // Initialize schema
@@ -59,7 +102,15 @@ export function persist() {
     const data = dbInstance.export();
     fs.writeFileSync(DB_PATH, Buffer.from(data));
   } catch (err) {
-    console.error('Error persisting SQLite to disk:', err);
+    console.error(`Error persisting SQLite to ${DB_PATH}:`, err);
+    try {
+      const fallbackPath = path.resolve(process.cwd(), 'quran_mate.sqlite');
+      if (fallbackPath !== DB_PATH) {
+        fs.writeFileSync(fallbackPath, Buffer.from(dbInstance.export()));
+      }
+    } catch (fallbackErr) {
+      console.error('Fallback persistence failed:', fallbackErr);
+    }
   }
 }
 
