@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { BookOpen, Target, FileText, Check, AlertCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import AvailabilityPicker from '../components/AvailabilityPicker.jsx';
+import PortionMemorizedSelector from '../components/PortionMemorizedSelector.jsx';
 
 const STAGES = [
   'Beginning',
@@ -33,6 +34,8 @@ export default function ProfileSetupPage() {
 
   const [name, setName] = useState(user?.name || '');
   const [stage, setStage] = useState(user?.memorization_stage || 'Beginning');
+  const [fromSurah, setFromSurah] = useState(user?.memorized_from_surah || 1);
+  const [toSurah, setToSurah] = useState(user?.memorized_to_surah || 114);
   const [goal, setGoal] = useState(user?.goal || 'Memorize new Ayahs daily');
   const [bio, setBio] = useState(user?.bio || '');
   const [slots, setSlots] = useState(
@@ -50,6 +53,8 @@ export default function ProfileSetupPage() {
     if (user) {
       if (user.name) setName(user.name);
       if (user.memorization_stage) setStage(user.memorization_stage);
+      if (user.memorized_from_surah) setFromSurah(user.memorized_from_surah);
+      if (user.memorized_to_surah) setToSurah(user.memorized_to_surah);
       if (user.goal) setGoal(user.goal);
       if (user.bio) setBio(user.bio);
     }
@@ -67,6 +72,8 @@ export default function ProfileSetupPage() {
       await updateProfile({
         name,
         memorization_stage: stage,
+        memorized_from_surah: fromSurah,
+        memorized_to_surah: toSurah,
         goal,
         bio,
       });
@@ -135,6 +142,19 @@ export default function ProfileSetupPage() {
                 </option>
               ))}
             </select>
+          </div>
+
+          {/* Portion Memorized From Surah to Surah */}
+          <div className="p-4 rounded-2xl border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/40 dark:bg-emerald-950/20">
+            <PortionMemorizedSelector
+              fromSurah={fromSurah}
+              toSurah={toSurah}
+              onChangeFrom={(val) => setFromSurah(val)}
+              onChangeTo={(val) => setToSurah(val)}
+              onApplyPreset={(preset) => {
+                setStage(preset.stage);
+              }}
+            />
           </div>
 
           {/* Goal */}

@@ -27,6 +27,7 @@ import { api } from '../services/api.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { JUZ_LIST } from '../data/juzData.js';
 import BismillahHeader from '../components/BismillahHeader.jsx';
+import BismillahLoader from '../components/BismillahLoader.jsx';
 
 export default function GroupRoomPage() {
   const { id } = useParams();
@@ -78,10 +79,6 @@ export default function GroupRoomPage() {
   }
 
   async function handleJoinCircle() {
-    if (!user) {
-      navigate('/login');
-      return;
-    }
     try {
       await api.joinGroup(id);
       await loadGroupDetails(false);
@@ -108,6 +105,9 @@ export default function GroupRoomPage() {
 
     try {
       setSendingMessage(true);
+      if (!group?.is_member) {
+        await api.joinGroup(id);
+      }
       await api.postGroupMessage(id, {
         text: messageText.trim(),
         ayah_ref: ayahRef.trim()
@@ -123,16 +123,10 @@ export default function GroupRoomPage() {
   }
 
   async function handleKhatmahAction(juzNumber, action) {
-    if (!user) {
-      navigate('/login');
-      return;
-    }
-    if (!group?.is_member) {
-      alert('Please join this study circle to participate in the collective Khatmah.');
-      return;
-    }
-
     try {
+      if (!group?.is_member) {
+        await api.joinGroup(id);
+      }
       setKhatmahActionLoading(juzNumber);
       await api.updateGroupKhatmah(id, {
         juz_number: juzNumber,
@@ -156,12 +150,10 @@ export default function GroupRoomPage() {
 
   if (loading && !group) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="text-center space-y-3">
-          <div className="w-10 h-10 border-3 border-[var(--primary)] border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-xs font-semibold text-[var(--text-muted)]">Entering Collaborative Room...</p>
-        </div>
-      </div>
+      <BismillahLoader
+        message="Entering Collaborative Halaqah Room..."
+        submessage="In the name of Allah, the Entirely Merciful, the Especially Merciful"
+      />
     );
   }
 
@@ -187,8 +179,10 @@ export default function GroupRoomPage() {
   const completedPct = group.completed_percentage || 0;
   const isKhatmahFullyCompleted = completedCount === 30;
 
-  // Jitsi meeting room URL
-  const meetingUrl = group.meeting_link || `https://meet.jit.si/QuranMate-Halaqah-${group.id}`;
+  // Video Meeting Providers: Google Meet & Built-in Jitsi
+  const [meetingProvider, setMeetingProvider] = useState('google_meet'); // 'google_meet' | 'in_app'
+  const googleMeetUrl = group.google_meet_link || (group.meeting_link?.includes('meet.google.com') ? group.meeting_link : 'https://meet.google.com/new');
+  const inAppMeetingUrl = (group.meeting_link && !group.meeting_link?.includes('meet.google.com')) ? group.meeting_link : `https://meet.jit.si/QuranMate-Halaqah-${group.id}`;
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
@@ -273,24 +267,26 @@ export default function GroupRoomPage() {
             </div>
           </div>
 
-          {/* Quick Launch Live Recitation Call Button */}
+          {/* Quick Launch Live Recitation Call Options */}
           <div className="flex flex-col sm:flex-row md:flex-col items-stretch gap-2.5 shrink-0">
-            <button
-              onClick={() => setIsLiveCallOpen(!isLiveCallOpen)}
-              className="px-5 py-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-bold text-xs sm:text-sm transition-all shadow-md flex items-center justify-center gap-2"
-            >
-              <Video className="w-4 h-4 text-emerald-200" />
-              <span>{isLiveCallOpen ? 'Hide Live Recitation' : 'Start / Join Live Halaqah'}</span>
-            </button>
             <a
-              href={meetingUrl}
+              href={googleMeetUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="px-4 py-2 rounded-xl border border-[var(--border-color)] hover:bg-[var(--bg-subtle)] text-[var(--text-secondary)] text-center text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
+              className="px-5 py-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-bold text-xs sm:text-sm transition-all shadow-md flex items-center justify-center gap-2 text-center"
             >
-              <span>Open in New Tab</span>
-              <ExternalLink className="w-3 h-3" />
+              <Video className="w-4 h-4 text-emerald-200" />
+              <span>Join via Google Meet</span>
+              <ExternalLink className="w-3.5 h-3.5 opacity-80" />
             </a>
+
+            <button
+              onClick={() => setIsLiveCallOpen(!isLiveCallOpen)}
+              className="px-4 py-2 rounded-xl border border-[var(--border-color)] hover:bg-[var(--bg-subtle)] text-[var(--text-secondary)] text-center text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+            >
+              <Video className="w-3.5 h-3.5 text-emerald-600" />
+              <span>{isLiveCallOpen ? 'Hide In-App Room' : 'Open In-App Video Room'}</span>
+            </button>
           </div>
         </div>
 
@@ -301,9 +297,9 @@ export default function GroupRoomPage() {
       {/* Embedded Live Recitation & Video Study Room Frame */}
       {isLiveCallOpen && (
         <div className="rounded-3xl border border-emerald-500/40 bg-[var(--bg-card)] p-4 sm:p-6 shadow-lg space-y-4 animate-in fade-in zoom-in-95 duration-200">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-2.5">
-              <span className="w-3 h-3 rounded-full bg-emerald-500 animate-ping" />
+              <span className="w-3 h-3 rounded-full bg-emerald-500 animate-ping shrink-0" />
               <div>
                 <h3 className="text-sm sm:text-base font-bold text-[var(--text-primary)]">
                   Live Virtual Halaqah Room
@@ -313,22 +309,87 @@ export default function GroupRoomPage() {
                 </p>
               </div>
             </div>
-            <button
-              onClick={() => setIsLiveCallOpen(false)}
-              className="text-xs font-semibold px-3 py-1.5 rounded-xl border border-[var(--border-color)] hover:bg-[var(--bg-subtle)]"
-            >
-              Close Feed
-            </button>
+
+            {/* Provider Switcher */}
+            <div className="flex items-center gap-2">
+              <div className="inline-flex rounded-xl border border-[var(--border-color)] bg-[var(--bg-subtle)] p-0.5 text-xs">
+                <button
+                  onClick={() => setMeetingProvider('google_meet')}
+                  className={`px-3 py-1 rounded-lg font-bold transition-colors ${
+                    meetingProvider === 'google_meet'
+                      ? 'bg-emerald-600 text-white shadow-2xs'
+                      : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                  }`}
+                >
+                  Google Meet
+                </button>
+                <button
+                  onClick={() => setMeetingProvider('in_app')}
+                  className={`px-3 py-1 rounded-lg font-bold transition-colors ${
+                    meetingProvider === 'in_app'
+                      ? 'bg-emerald-600 text-white shadow-2xs'
+                      : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                  }`}
+                >
+                  In-App Room
+                </button>
+              </div>
+
+              <button
+                onClick={() => setIsLiveCallOpen(false)}
+                className="text-xs font-semibold px-3 py-1.5 rounded-xl border border-[var(--border-color)] hover:bg-[var(--bg-subtle)] cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
           </div>
 
-          <div className="w-full h-[520px] rounded-2xl overflow-hidden border border-[var(--border-color)] bg-black">
-            <iframe
-              src={`${meetingUrl}#config.prejoinPageEnabled=false&config.disableDeepLinking=true`}
-              title="Quran Mate Live Recitation Room"
-              allow="camera; microphone; fullscreen; display-capture; autoplay"
-              className="w-full h-full border-0"
-            />
-          </div>
+          {meetingProvider === 'google_meet' ? (
+            <div className="p-8 rounded-2xl border border-emerald-200 dark:border-emerald-800/60 bg-emerald-50/50 dark:bg-emerald-950/20 text-center space-y-4">
+              <div className="w-14 h-14 rounded-2xl bg-emerald-600 text-white flex items-center justify-center mx-auto shadow-md">
+                <Video className="w-7 h-7" />
+              </div>
+              <div className="max-w-md mx-auto space-y-1">
+                <h4 className="text-base font-bold text-[var(--text-primary)]">
+                  Google Meet Room for {group.name}
+                </h4>
+                <p className="text-xs text-[var(--text-secondary)]">
+                  Connect with crystal-clear audio, live captions, and seamless screen sharing for recitation directly via Google Meet.
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                <a
+                  href={googleMeetUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm transition-colors shadow-md flex items-center gap-2"
+                >
+                  <span>Launch Google Meet</span>
+                  <ExternalLink className="w-4 h-4" />
+                </a>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(googleMeetUrl);
+                    alert('Google Meet link copied to clipboard!');
+                  }}
+                  className="px-4 py-3 rounded-xl border border-[var(--border-color)] bg-[var(--bg-surface)] hover:bg-[var(--bg-subtle)] text-xs font-semibold transition-colors"
+                >
+                  Copy Meet Link
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="w-full h-[520px] rounded-2xl overflow-hidden border border-[var(--border-color)] bg-black">
+              {inAppMeetingUrl ? (
+                <iframe
+                  src={`${inAppMeetingUrl}#config.prejoinPageEnabled=false&config.disableDeepLinking=true`}
+                  title="Quran Mate Live Recitation Room"
+                  allow="camera; microphone; fullscreen; display-capture; autoplay"
+                  className="w-full h-full border-0"
+                />
+              ) : null}
+            </div>
+          )}
 
           <div className="p-3 rounded-xl bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 text-xs text-emerald-800 dark:text-emerald-300 flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 shrink-0" />

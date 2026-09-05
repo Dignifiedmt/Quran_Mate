@@ -28,6 +28,17 @@ export async function getDb() {
   if (fs.existsSync(schemaPath)) {
     const schemaSql = fs.readFileSync(schemaPath, 'utf-8');
     dbInstance.exec(schemaSql);
+    // Safe progressive migrations for columns
+    try {
+      dbInstance.exec("ALTER TABLE users ADD COLUMN memorized_from_surah INTEGER DEFAULT 1;");
+    } catch (e) {
+      // Column may already exist
+    }
+    try {
+      dbInstance.exec("ALTER TABLE users ADD COLUMN memorized_to_surah INTEGER DEFAULT 114;");
+    } catch (e) {
+      // Column may already exist
+    }
     persist();
   }
 

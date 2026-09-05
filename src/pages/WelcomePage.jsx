@@ -24,6 +24,7 @@ import BrandLogo from '../components/BrandLogo.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import BismillahHeader from '../components/BismillahHeader.jsx';
 import PWAInstallButton from '../components/PWAInstallButton.jsx';
+import firstQuranHeroImg from '../assets/images/quran_hero_banner_1788410479439.jpg';
 
 export default function WelcomePage() {
   const { user, demoLogin } = useAuth();
@@ -33,12 +34,12 @@ export default function WelcomePage() {
   const [isPlayingRecitation, setIsPlayingRecitation] = useState(false);
   const audioRef = useRef(null);
 
-  // Hero section Qur'an image with primary external link and robust local fallbacks
+  // Hero section Qur'an image with first actual image and user-specified unsplash fallback
   const heroQuranSources = [
-    'https://www.citypng.com/public/uploads/preview/-51616604772ltayg1w4ym.png',
-    '/quran-fallback.png',
-    '/quran-hero-alt.jpg',
+    firstQuranHeroImg,
+    'https://images.unsplash.com/photo-1761406778100-de0254ec6788?auto=format&fit=crop&fm=jpg&q=80&w=1600',
     '/src/assets/images/quran_hero_illustration_1788484620067.jpg',
+    '/quran-fallback.png',
   ];
   const [heroImgIndex, setHeroImgIndex] = useState(0);
 
@@ -140,14 +141,16 @@ export default function WelcomePage() {
           <div className="absolute inset-0 bg-emerald-950/30 pointer-events-none" />
 
           <div className="relative z-10 flex flex-col items-center text-center max-w-2xl py-4">
-            <img
-              src={heroQuranSources[heroImgIndex]}
-              onError={handleHeroImgError}
-              alt="Holy Qur'an"
-              className="max-h-56 sm:max-h-72 w-auto object-contain filter drop-shadow-[0_20px_35px_rgba(0,0,0,0.65)] transform group-hover:scale-105 transition-transform duration-700 select-none"
-              referrerPolicy="no-referrer"
-              loading="eager"
-            />
+            {heroQuranSources[heroImgIndex] ? (
+              <img
+                src={heroQuranSources[heroImgIndex] || null}
+                onError={handleHeroImgError}
+                alt="Holy Qur'an"
+                className="max-h-56 sm:max-h-72 w-auto object-contain filter drop-shadow-[0_20px_35px_rgba(0,0,0,0.65)] transform group-hover:scale-105 transition-transform duration-700 select-none"
+                referrerPolicy="no-referrer"
+                loading="eager"
+              />
+            ) : null}
             <div className="mt-5">
               <div className="inline-flex items-center gap-2 text-xs font-semibold text-emerald-300 mb-2 px-3 py-1 rounded-full bg-emerald-900/80 border border-emerald-500/40 shadow-xs backdrop-blur-xs">
                 <Sparkles className="w-3.5 h-3.5 text-amber-400" />
@@ -249,11 +252,13 @@ export default function WelcomePage() {
             </div>
 
             <div className="flex items-center gap-2">
-              <audio
-                ref={audioRef}
-                src={sampleAyah.audioUrl}
-                onEnded={() => setIsPlayingRecitation(false)}
-              />
+              {sampleAyah?.audioUrl ? (
+                <audio
+                  ref={audioRef}
+                  src={sampleAyah.audioUrl || null}
+                  onEnded={() => setIsPlayingRecitation(false)}
+                />
+              ) : null}
               <button
                 onClick={toggleRecitation}
                 className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-xs ${

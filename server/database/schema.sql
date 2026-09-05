@@ -9,6 +9,8 @@ CREATE TABLE IF NOT EXISTS users (
   password_hash TEXT NOT NULL,
   bio TEXT DEFAULT '',
   memorization_stage TEXT DEFAULT 'Beginning',
+  memorized_from_surah INTEGER DEFAULT 1,
+  memorized_to_surah INTEGER DEFAULT 114,
   goal TEXT DEFAULT 'Memorize consistently',
   avatar_color TEXT DEFAULT '#15803d',
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,

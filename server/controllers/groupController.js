@@ -1,5 +1,7 @@
 // Qur'an Study Circles & Collaborative Halaqahs Controller
+import jwt from 'jsonwebtoken';
 import { query, get, run, exec } from '../database/database.js';
+import { JWT_SECRET } from '../middleware/auth.js';
 
 // Ensure tables exist on invocation
 async function ensureTables() {
@@ -333,28 +335,68 @@ export async function getGroupById(req, res) {
   }
 }
 
-// 3. POST /api/groups - Create a new study circle / collaborative room
+// 3. POST /api/groups - Create a new study circle / collaborative room (available to everyone)
 export async function createGroup(req, res) {
   try {
     await ensureTables();
-    const userId = req.user.id;
+    let userId = req.user ? req.user.id : null;
+    let token = null;
+    let authUser = null;
+
     const {
       name,
       description = '',
       category = 'Memorization',
       target_goal = 'Complete collective Quran Khatmah',
       meeting_schedule = 'Weekly on Fridays at 07:00 AM UTC',
+      meeting_link = '',
+      meeting_platform = 'google_meet',
       max_members = 30,
-      avatar_theme = 'emerald'
+      avatar_theme = 'emerald',
+      guest_name = ''
     } = req.body;
 
     if (!name || !name.trim()) {
       return res.status(400).json({ error: 'Please provide a name for your study circle' });
     }
 
+    // If caller is not authenticated, provision a seamless guest host account so creation is open to everyone
+    if (!userId) {
+      const cleanGuestName = (guest_name?.trim() || 'Sister Halaqah Host').slice(0, 40);
+      const guestEmail = `host_${Date.now()}_${Math.floor(Math.random() * 10000)}@quranmate.local`;
+      const colors = ['#047857', '#0f766e', '#854d0e', '#1e3a8a', '#4338ca', '#065f46', '#15803d'];
+      const chosenColor = colors[Math.floor(Math.random() * colors.length)];
+
+      const guestResult = await run(
+        `INSERT INTO users (name, email, password_hash, bio, memorization_stage, goal, avatar_color)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [cleanGuestName, guestEmail, 'guest_account_secured', 'Circle Founder & Host', 'Juz 30', 'Halaqah study & recitation', chosenColor]
+      );
+      userId = guestResult.lastInsertRowid;
+      authUser = {
+        id: userId,
+        name: cleanGuestName,
+        email: guestEmail,
+        bio: 'Circle Founder & Host',
+        memorization_stage: 'Juz 30',
+        goal: 'Halaqah study & recitation',
+        avatar_color: chosenColor
+      };
+      token = jwt.sign({ id: userId, email: guestEmail }, JWT_SECRET, { expiresIn: '30d' });
+    }
+
     const cleanName = name.trim();
     const safeRoomSlug = cleanName.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 30);
-    const generatedMeetingLink = `https://meet.jit.si/QuranMate-Halaqah-${safeRoomSlug}-${Date.now().toString().slice(-4)}`;
+    
+    // Choose appropriate meeting link (Google Meet or high quality video room)
+    let generatedMeetingLink = meeting_link?.trim();
+    if (!generatedMeetingLink) {
+      if (meeting_platform === 'google_meet') {
+        generatedMeetingLink = 'https://meet.google.com/new';
+      } else {
+        generatedMeetingLink = `https://meet.jit.si/QuranMate-Halaqah-${safeRoomSlug}-${Date.now().toString().slice(-4)}`;
+      }
+    }
 
     const result = await run(
       `INSERT INTO study_groups (name, description, category, target_goal, creator_id, meeting_schedule, meeting_link, max_members, avatar_theme)
@@ -404,7 +446,9 @@ export async function createGroup(req, res) {
 
     res.status(201).json({
       id: groupId,
-      message: 'Study circle room created successfully'
+      message: 'Study circle room created successfully',
+      token,
+      user: authUser
     });
   } catch (err) {
     console.error('Error creating study group:', err);
@@ -412,11 +456,38 @@ export async function createGroup(req, res) {
   }
 }
 
-// 4. POST /api/groups/:id/join - Join a study circle room
+// 4. POST /api/groups/:id/join - Join a study circle room (open to everyone)
 export async function joinGroup(req, res) {
   try {
     const groupId = parseInt(req.params.id, 10);
-    const userId = req.user.id;
+    let userId = req.user ? req.user.id : null;
+    let token = null;
+    let authUser = null;
+
+    // If unauthenticated guest joins, automatically provision guest learner credentials
+    if (!userId) {
+      const cleanGuestName = (req.body.guest_name?.trim() || 'Sister Reciter').slice(0, 40);
+      const guestEmail = `guest_${Date.now()}_${Math.floor(Math.random() * 10000)}@quranmate.local`;
+      const colors = ['#047857', '#0f766e', '#854d0e', '#1e3a8a', '#4338ca', '#065f46', '#15803d'];
+      const chosenColor = colors[Math.floor(Math.random() * colors.length)];
+
+      const guestResult = await run(
+        `INSERT INTO users (name, email, password_hash, bio, memorization_stage, goal, avatar_color)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [cleanGuestName, guestEmail, 'guest_account_secured', 'Halaqah Member', 'Juz 30', 'Learn & memorize Quran', chosenColor]
+      );
+      userId = guestResult.lastInsertRowid;
+      authUser = {
+        id: userId,
+        name: cleanGuestName,
+        email: guestEmail,
+        bio: 'Halaqah Member',
+        memorization_stage: 'Juz 30',
+        goal: 'Learn & memorize Quran',
+        avatar_color: chosenColor
+      };
+      token = jwt.sign({ id: userId, email: guestEmail }, JWT_SECRET, { expiresIn: '30d' });
+    }
 
     const group = await get('SELECT id, max_members, name FROM study_groups WHERE id = ?', [groupId]);
     if (!group) {
@@ -448,7 +519,12 @@ export async function joinGroup(req, res) {
       );
     }
 
-    res.json({ success: true, message: `Successfully joined ${group.name}` });
+    res.json({
+      success: true,
+      message: `Successfully joined ${group.name}`,
+      token,
+      user: authUser
+    });
   } catch (err) {
     console.error('Error joining group:', err);
     res.status(500).json({ error: 'Failed to join group' });

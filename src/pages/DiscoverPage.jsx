@@ -32,6 +32,7 @@ export default function DiscoverPage() {
   const [search, setSearch] = useState('');
   const [stage, setStage] = useState('all');
   const [day, setDay] = useState('all');
+  const [sameLevelOnly, setSameLevelOnly] = useState(false);
 
   // Request Modal State
   const [selectedLearner, setSelectedLearner] = useState(null);
@@ -47,6 +48,7 @@ export default function DiscoverPage() {
         stage: stage !== 'all' ? stage : undefined,
         day: day !== 'all' ? day : undefined,
         search: search.trim() || undefined,
+        sameLevelOnly: sameLevelOnly ? 'true' : undefined,
       });
       setLearners(data.learners || []);
     } catch (err) {
@@ -58,7 +60,7 @@ export default function DiscoverPage() {
 
   useEffect(() => {
     fetchLearners();
-  }, [stage, day]);
+  }, [stage, day, sameLevelOnly]);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -170,14 +172,59 @@ export default function DiscoverPage() {
             </select>
           </div>
 
+          {/* Same Level Match Filter Button */}
+          {user && (
+            <button
+              type="button"
+              onClick={() => setSameLevelOnly(!sameLevelOnly)}
+              className={`px-3 py-2.5 rounded-xl text-xs font-semibold border transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
+                sameLevelOnly
+                  ? 'bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-950 dark:text-amber-200 dark:border-amber-700 shadow-xs'
+                  : 'bg-[var(--bg-primary)] text-[var(--text-secondary)] border-[var(--border-color)] hover:border-amber-400'
+              }`}
+              title="Show learners at your exact memorization level"
+            >
+              <span>🎯</span>
+              <span>Same Level as Me ({user.memorization_stage || 'Beginning'})</span>
+            </button>
+          )}
+
           <button
             type="submit"
-            className="px-4 py-2.5 rounded-xl text-xs font-semibold bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] transition-colors shrink-0"
+            className="px-4 py-2.5 rounded-xl text-xs font-semibold bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] transition-colors shrink-0 cursor-pointer"
           >
             Apply Filters
           </button>
         </form>
       </div>
+
+      {/* Recommended Level banner */}
+      {user && (
+        <div className="mb-6 p-3.5 rounded-2xl border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/50 dark:bg-emerald-950/20 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <span className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-sm shrink-0">
+              🎯
+            </span>
+            <div>
+              <div className="text-xs font-bold text-emerald-900 dark:text-emerald-100">
+                Recommended Partners at Your Level ({user.memorization_stage || 'Beginning'})
+              </div>
+              <div className="text-[11px] text-emerald-700 dark:text-emerald-300">
+                Learners matching your memorization stage and pace are ranked first for optimal mutual revision.
+              </div>
+            </div>
+          </div>
+          {!sameLevelOnly && (
+            <button
+              type="button"
+              onClick={() => setSameLevelOnly(true)}
+              className="text-xs font-bold text-emerald-800 dark:text-emerald-200 bg-emerald-200/60 dark:bg-emerald-900/60 px-3 py-1.5 rounded-xl hover:bg-emerald-300/60 transition-colors cursor-pointer"
+            >
+              Filter Same Level Only
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Learners Grid / States */}
       {loading ? (

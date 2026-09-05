@@ -42,6 +42,7 @@ export default function SessionScheduler({ partnershipId, defaultPartner = null,
   const [durationMinutes, setDurationMinutes] = useState(30);
   const [sessionType, setSessionType] = useState('hifz'); // 'hifz' | 'murajaah' | 'tajweed' | 'milestone'
   const [agenda, setAgenda] = useState('');
+  const [meetingPlatform, setMeetingPlatform] = useState('google_meet'); // 'google_meet' | 'in_app'
   const [meetingLink, setMeetingLink] = useState('');
 
   const loadSessions = async () => {
@@ -77,7 +78,11 @@ export default function SessionScheduler({ partnershipId, defaultPartner = null,
       setErrorMsg('');
 
       const partnerId = defaultPartner ? defaultPartner.id : null;
-      const autoMeetingLink = meetingLink.trim() || `https://meet.jit.si/QuranMate-${Date.now().toString(36)}`;
+      const autoMeetingLink =
+        meetingLink.trim() ||
+        (meetingPlatform === 'google_meet'
+          ? 'https://meet.google.com/new'
+          : `https://meet.jit.si/QuranMate-${Date.now().toString(36)}`);
 
       await api.createSession({
         partnership_id: partnershipId || null,
@@ -273,6 +278,51 @@ export default function SessionScheduler({ partnershipId, defaultPartner = null,
 
           <div>
             <label className="block text-xs font-semibold text-[var(--text-primary)] mb-1">
+              Meeting Platform
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setMeetingPlatform('google_meet')}
+                className={`p-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                  meetingPlatform === 'google_meet'
+                    ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300'
+                    : 'border-[var(--border-color)] bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:bg-[var(--bg-subtle)]'
+                }`}
+              >
+                <Video className="w-4 h-4 text-emerald-600" />
+                <span>Google Meet (Best)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setMeetingPlatform('in_app')}
+                className={`p-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                  meetingPlatform === 'in_app'
+                    ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300'
+                    : 'border-[var(--border-color)] bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:bg-[var(--bg-subtle)]'
+                }`}
+              >
+                <Video className="w-4 h-4 text-emerald-600" />
+                <span>In-App Video</span>
+              </button>
+            </div>
+            <div className="mt-2">
+              <input
+                type="url"
+                value={meetingLink}
+                onChange={(e) => setMeetingLink(e.target.value)}
+                placeholder={
+                  meetingPlatform === 'google_meet'
+                    ? 'Paste Google Meet URL (or leave blank to auto-create)'
+                    : 'Paste custom call link (optional)'
+                }
+                className="w-full px-3 py-2 rounded-xl border border-[var(--border-color)] bg-[var(--bg-surface)] text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--primary)]"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-[var(--text-primary)] mb-1">
               Agenda &amp; Verses to be Tested
             </label>
             <textarea
@@ -366,7 +416,11 @@ export default function SessionScheduler({ partnershipId, defaultPartner = null,
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xs transition-all"
                       >
                         <Video className="w-3.5 h-3.5" />
-                        <span>Join Room</span>
+                        <span>
+                          {sess.meeting_link?.includes('meet.google.com')
+                            ? 'Join Google Meet'
+                            : 'Join Room'}
+                        </span>
                         <ExternalLink className="w-3 h-3 opacity-70" />
                       </a>
 

@@ -5,6 +5,7 @@ import { useAuth } from './context/AuthContext.jsx';
 import Navbar from './components/Navbar.jsx';
 import MobileNav from './components/MobileNav.jsx';
 import PWAInstallBanner from './components/PWAInstallBanner.jsx';
+import BismillahLoader from './components/BismillahLoader.jsx';
 
 // Pages
 import WelcomePage from './pages/WelcomePage.jsx';
@@ -30,12 +31,11 @@ function ProtectedRoute({ children }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center space-y-3">
-          <div className="w-10 h-10 border-3 border-[var(--primary)] border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-xs font-semibold text-[var(--text-muted)]">Loading Quran Mate...</p>
-        </div>
-      </div>
+      <BismillahLoader
+        message="Entering Quran Mate..."
+        submessage="In the name of Allah, the Entirely Merciful, the Especially Merciful"
+        fullScreen={true}
+      />
     );
   }
 
@@ -55,7 +55,7 @@ export default function App() {
       <Navbar />
 
       {/* Main Content */}
-      <main className="flex-1 pb-16 sm:pb-0">
+      <main className="flex-1 pb-20 sm:pb-24">
         <Routes>
           {/* Public or Accessible Home Routes */}
           <Route
@@ -90,14 +90,7 @@ export default function App() {
           {/* Collaborative Circles & Group Halaqah Rooms */}
           <Route path="/groups" element={<GroupsDirectoryPage />} />
           <Route path="/circles" element={<Navigate to="/groups" replace />} />
-          <Route
-            path="/groups/:id"
-            element={
-              <ProtectedRoute>
-                <GroupRoomPage />
-              </ProtectedRoute>
-            }
-          />
+          <Route path="/groups/:id" element={<GroupRoomPage />} />
 
           {/* Daily Quran Habit Tracker */}
           <Route

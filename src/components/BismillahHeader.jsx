@@ -15,14 +15,15 @@ const WORDS = [
 export default function BismillahHeader({
   className = '',
   showTranslation = true,
-  autoStartOnView = true,
+  autoStartOnView = false,
   enableReplay = true
 }) {
   const containerRef = useRef(null);
-  const [hasScrolledIntoView, setHasScrolledIntoView] = useState(false);
+  // Default to immediately visible so users always see the sacred Bismillah
+  const [hasScrolledIntoView, setHasScrolledIntoView] = useState(true);
   const [isWriting, setIsWriting] = useState(false);
-  const [isFinished, setIsFinished] = useState(false);
-  const [visibleCharsCount, setVisibleCharsCount] = useState(0);
+  const [isFinished, setIsFinished] = useState(true);
+  const [visibleCharsCount, setVisibleCharsCount] = useState(BISMILLAH_FULL.length);
   const [soundEnabled, setSoundEnabled] = useState(false);
   const audioCtxRef = useRef(null);
   const animationTimerRef = useRef(null);
@@ -133,10 +134,19 @@ export default function BismillahHeader({
       aria-label="Bismillah ir-Rahman ir-Rahim"
     >
       {!hasScrolledIntoView ? (
-        // Lazy placeholder waiting for viewport intersection
-        <div className="h-20 flex flex-col items-center justify-center space-y-2 opacity-60">
-          <div className="w-56 sm:w-72 h-8 bg-emerald-100/40 dark:bg-emerald-950/30 rounded-2xl animate-pulse" />
-          <div className="w-40 h-3 bg-[var(--bg-subtle)] rounded-full animate-pulse" />
+        // Lazy placeholder waiting for viewport intersection with tranquil Bismillah loader
+        <div className="h-20 flex flex-col items-center justify-center space-y-2 select-none">
+          <div
+            className="font-arabic text-xl sm:text-2xl font-extrabold bismillah-calligraphy tracking-wide"
+            dir="rtl"
+            lang="ar"
+            style={{
+              fontFamily: "'Amiri', 'Traditional Arabic', 'Scheherazade New', 'Noto Naskh Arabic', serif",
+            }}
+          >
+            بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ
+          </div>
+          <div className="w-36 h-0.5 bg-gradient-to-r from-transparent via-amber-500/50 to-transparent rounded-full animate-pulse" />
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center space-y-2">
@@ -176,14 +186,14 @@ export default function BismillahHeader({
                 </div>
               )}
 
-              {/* The Arabic Text written in authentic Nastaliq / Naskh style */}
+              {/* The Arabic Text written in deep pitch dark ink in light theme, luminous emerald in dark theme */}
               <div
-                className="font-arabic text-2xl sm:text-3xl lg:text-4xl text-emerald-950 dark:text-emerald-100 tracking-wide leading-relaxed drop-shadow-xs transition-all duration-150"
+                className="font-arabic text-2xl sm:text-3xl lg:text-4xl font-extrabold bismillah-calligraphy tracking-wider leading-relaxed drop-shadow-xs transition-all duration-150 py-1"
                 dir="rtl"
                 lang="ar"
                 style={{
                   fontFamily: "'Amiri', 'Traditional Arabic', 'Scheherazade New', 'Noto Naskh Arabic', serif",
-                  minHeight: '1.4em'
+                  minHeight: '1.4em',
                 }}
               >
                 {displayedText}
@@ -216,7 +226,7 @@ export default function BismillahHeader({
                 isFinished ? 'opacity-100 translate-y-0' : isWriting ? 'opacity-40 translate-y-1' : 'opacity-0'
               }`}
             >
-              <p className="text-[11px] sm:text-xs text-[var(--text-muted)] italic max-w-md mx-auto font-serif">
+              <p className="text-[11px] sm:text-xs text-slate-900 dark:text-slate-200 font-serif italic max-w-md mx-auto font-medium">
                 In the name of Allah, the Entirely Merciful, the Especially Merciful
               </p>
             </div>

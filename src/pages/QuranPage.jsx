@@ -29,6 +29,7 @@ import {
 import { api } from '../services/api.js';
 import AyahCard from '../components/AyahCard.jsx';
 import ReflectionCardGenerator from '../components/ReflectionCardGenerator.jsx';
+import BismillahLoader from '../components/BismillahLoader.jsx';
 
 // 30 Juz Quick Reference Boundaries
 const JUZ_LIST = [
@@ -754,12 +755,11 @@ export default function QuranPage() {
 
           {/* Surah Content / Reading Area */}
           {readerLoading ? (
-            <div className="py-20 text-center space-y-4">
-              <div className="w-10 h-10 border-3 border-[var(--primary)] border-t-transparent rounded-full animate-spin mx-auto" />
-              <p className="text-xs font-bold text-[var(--text-muted)]">
-                Loading Surah text and recitations...
-              </p>
-            </div>
+            <BismillahLoader
+              message="Loading Surah text, translations & recitation..."
+              submessage="In the name of Allah, the Entirely Merciful, the Especially Merciful"
+              className="py-12"
+            />
           ) : readerError ? (
             <div className="p-8 text-center rounded-2xl border border-red-200 bg-red-50 dark:bg-red-950/30 text-red-600 space-y-3">
               <AlertCircle className="w-8 h-8 mx-auto" />
@@ -788,11 +788,18 @@ export default function QuranPage() {
                   </p>
                 </div>
 
-                {/* Bismillah Banner (except Surah 9 At-Tawbah) */}
+                {/* Bismillah Banner (except Surah 9 At-Tawbah) - High contrast dark in light theme, soft emerald in dark theme */}
                 {surahData.number !== 9 && (
                   <div className="pt-3">
                     <div className="inline-block px-6 py-2.5 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-color)] shadow-2xs">
-                      <span className="font-arabic text-xl sm:text-2xl text-[var(--primary)] leading-relaxed">
+                      <span
+                        className="font-arabic text-xl sm:text-2xl font-extrabold bismillah-calligraphy leading-relaxed tracking-wide select-none"
+                        dir="rtl"
+                        lang="ar"
+                        style={{
+                          fontFamily: "'Amiri', 'Traditional Arabic', 'Scheherazade New', 'Noto Naskh Arabic', serif",
+                        }}
+                      >
                         بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ
                       </span>
                     </div>

@@ -57,14 +57,10 @@ export default function Navbar() {
     navigate('/dashboard');
   };
 
+  // The Core Four Tabs Navigation of Quran Mate
   const navLinks = [
-    { label: 'Home', path: '/home', icon: Home, desc: 'Public overview & features' },
-    { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, desc: 'Daily stats & goals' },
-    { label: 'Qur\'an', path: '/quran', icon: BookOpen, desc: '114 Surahs & audio recitation' },
-    { label: 'Ayah Finder', path: '/ayah-finder', icon: Search, desc: 'Thematic search & tafsir' },
+    { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, desc: 'Overview & Qur\'an Reciter' },
     { label: 'Tracker', path: '/tracker', icon: CalendarCheck, desc: 'Streaks & weekly chart' },
-    { label: 'Circles', path: '/groups', icon: Layers, desc: 'Collaborative rooms & Khatmah' },
-    { label: 'Find Mates', path: '/discover', icon: Users, desc: 'Find compatible partners' },
     {
       label: 'My Mate',
       path: '/partnership',
@@ -72,6 +68,7 @@ export default function Navbar() {
       desc: 'Daily check-in & streaks',
       badge: activePartnershipId ? 'Active' : null,
     },
+    { label: 'Discover', path: '/discover', icon: Users, desc: 'Find compatible partners' },
   ];
 
   const closeMobileMenu = () => setIsMobileDrawerOpen(false);

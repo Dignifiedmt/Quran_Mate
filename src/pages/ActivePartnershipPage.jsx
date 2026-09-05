@@ -12,7 +12,9 @@ import {
   Sparkles,
   AlertCircle,
   XCircle,
-  HelpCircle
+  HelpCircle,
+  Video,
+  ExternalLink
 } from 'lucide-react';
 import { api } from '../services/api.js';
 import { useAuth } from '../context/AuthContext.jsx';
@@ -143,13 +145,27 @@ export default function ActivePartnershipPage() {
           </div>
         </div>
 
-        <Link
-          to={`/partnership/${partnershipData.id}/messages`}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] shadow-sm transition-all"
-        >
-          <MessageCircle className="w-4 h-4" />
-          <span>Coordinate Study Session</span>
-        </Link>
+        <div className="flex flex-wrap items-center gap-2.5">
+          <a
+            href="https://meet.google.com/new"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition-all"
+            title="Start instant live recitation call on Google Meet"
+          >
+            <Video className="w-4 h-4 text-emerald-100" />
+            <span>Start Google Meet</span>
+            <ExternalLink className="w-3 h-3 opacity-70" />
+          </a>
+
+          <Link
+            to={`/partnership/${partnershipData.id}/messages`}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] shadow-xs transition-all"
+          >
+            <MessageCircle className="w-4 h-4" />
+            <span>Coordinate Study Session</span>
+          </Link>
+        </div>
       </div>
 
       {/* Side-by-Side Partners Overview */}

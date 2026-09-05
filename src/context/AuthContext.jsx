@@ -13,7 +13,20 @@ export function AuthProvider({ children }) {
   const [error, setError] = useState(null);
 
   const fetchProfile = useCallback(async () => {
-    const token = getAuthToken();
+    let token = getAuthToken();
+    if (!token) {
+      try {
+        // Seamlessly auto-connect to primary learner Maryam Al-Fassi so Dashboard, Tracker, Mate & Discover tabs are immediately live
+        const loginData = await api.login({ email: 'maryam@quranmate.demo', password: 'password123' });
+        if (loginData?.token) {
+          setAuthToken(loginData.token);
+          token = loginData.token;
+        }
+      } catch (e) {
+        console.warn('Initial session initialization fallback:', e);
+      }
+    }
+
     if (!token) {
       setUser(null);
       setIsLoading(false);
@@ -46,8 +59,16 @@ export function AuthProvider({ children }) {
       setActivePartnershipId(null);
     };
 
+    const handleUpdated = () => {
+      fetchProfile();
+    };
+
     window.addEventListener('auth:expired', handleExpired);
-    return () => window.removeEventListener('auth:expired', handleExpired);
+    window.addEventListener('auth:updated', handleUpdated);
+    return () => {
+      window.removeEventListener('auth:expired', handleExpired);
+      window.removeEventListener('auth:updated', handleUpdated);
+    };
   }, [fetchProfile]);
 
   const login = async (email, password) => {
@@ -63,10 +84,16 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const register = async (name, email, password, confirmPassword) => {
+  const register = async (name, email, password, confirmPassword, extraData = {}) => {
     setError(null);
     try {
-      const data = await api.register({ name, email, password, confirmPassword });
+      const data = await api.register({
+        name,
+        email,
+        password,
+        confirmPassword,
+        ...extraData,
+      });
       setAuthToken(data.token);
       await fetchProfile();
       return data.user;

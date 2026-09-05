@@ -33,11 +33,13 @@ function optionalAuth(req, res, next) {
 router.get('/', optionalAuth, getGroups);
 router.get('/:id', optionalAuth, getGroupById);
 
-// Protected routes (requires login)
-router.post('/', authenticateToken, createGroup);
-router.post('/:id/join', authenticateToken, joinGroup);
+// Public / open room actions (supports both authenticated users and guests)
+router.post('/', optionalAuth, createGroup);
+router.post('/:id/join', optionalAuth, joinGroup);
+
+// Member routes
 router.post('/:id/leave', authenticateToken, leaveGroup);
-router.post('/:id/messages', authenticateToken, postGroupMessage);
-router.post('/:id/khatmah', authenticateToken, updateGroupKhatmah);
+router.post('/:id/messages', optionalAuth, postGroupMessage);
+router.post('/:id/khatmah', optionalAuth, updateGroupKhatmah);
 
 export default router;

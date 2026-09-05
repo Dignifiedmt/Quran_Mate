@@ -25,18 +25,23 @@ import {
 import { useAuth } from '../context/AuthContext.jsx';
 import { api } from '../services/api.js';
 import BismillahHeader from '../components/BismillahHeader.jsx';
+import BismillahLoader from '../components/BismillahLoader.jsx';
 import { SCREEN_SECTIONS } from '../components/AllScreensDirectory.jsx';
 import BrandLogo from '../components/BrandLogo.jsx';
+import DashboardQuranSection from '../components/DashboardQuranSection.jsx';
+import CreateGroupModal from '../components/CreateGroupModal.jsx';
 
 export default function DashboardPage() {
   const { user, activePartnershipId } = useAuth();
   const navigate = useNavigate();
 
+  const [activeDashboardTab, setActiveDashboardTab] = useState('overview'); // 'overview' | 'quran'
   const [summary, setSummary] = useState(null);
   const [partnership, setPartnership] = useState(null);
   const [upcomingSessions, setUpcomingSessions] = useState([]);
   const [studyGroups, setStudyGroups] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isCreateCircleOpen, setIsCreateCircleOpen] = useState(false);
 
   useEffect(() => {
     async function loadDashboardData() {
@@ -78,6 +83,15 @@ export default function DashboardPage() {
     day: 'numeric',
   });
 
+  if (loading) {
+    return (
+      <BismillahLoader
+        message="Opening Learner Command Center..."
+        submessage="In the name of Allah, the Entirely Merciful, the Especially Merciful"
+      />
+    );
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-in fade-in duration-300">
       {/* Top Welcome Header */}
@@ -102,20 +116,21 @@ export default function DashboardPage() {
 
           {/* Quick Action Buttons */}
           <div className="flex flex-wrap items-center gap-2.5">
+            <button
+              type="button"
+              onClick={() => setActiveDashboardTab('quran')}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 shadow-xs transition-colors cursor-pointer"
+            >
+              <BookOpen className="w-4 h-4" />
+              <span>Open Qur&rsquo;an Reader</span>
+            </button>
+
             <Link
               to="/tracker"
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] shadow-xs transition-colors"
             >
               <PlusCircle className="w-4 h-4" />
               <span>Log Recitation</span>
-            </Link>
-
-            <Link
-              to="/quran"
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold border border-[var(--border-color)] bg-[var(--bg-subtle)] hover:bg-[var(--bg-surface)] text-[var(--text-primary)] transition-colors"
-            >
-              <BookOpen className="w-4 h-4 text-emerald-600" />
-              <span>Read Qur&rsquo;an</span>
             </Link>
 
             <Link
@@ -136,6 +151,49 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* Dashboard Top View Switcher */}
+      <div className="flex items-center gap-2 p-1.5 rounded-2xl border border-[var(--border-color)] bg-[var(--bg-surface)] shadow-xs max-w-md">
+        <button
+          type="button"
+          onClick={() => setActiveDashboardTab('overview')}
+          className={`flex-1 py-2 px-3.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+            activeDashboardTab === 'overview'
+              ? 'bg-[var(--primary)] text-white shadow-xs'
+              : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-subtle)]'
+          }`}
+        >
+          <Layers className="w-4 h-4" />
+          <span>Overview &amp; Halaqah</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveDashboardTab('quran')}
+          className={`flex-1 py-2 px-3.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+            activeDashboardTab === 'quran'
+              ? 'bg-emerald-600 text-white shadow-xs'
+              : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-subtle)]'
+          }`}
+        >
+          <BookOpen className="w-4 h-4" />
+          <span>Qur&rsquo;an Reciter</span>
+          <span className="px-1.5 py-0.2 rounded-full text-[9px] bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 font-extrabold">
+            114
+          </span>
+        </button>
+      </div>
+
+      {/* Tab 2: Integrated Holy Qur'an Reader */}
+      {activeDashboardTab === 'quran' && (
+        <div className="space-y-6">
+          <DashboardQuranSection defaultSurahNumber={user?.memorized_from_surah || 1} />
+        </div>
+      )}
+
+      {/* Tab 1: Overview & Activity */}
+      {activeDashboardTab === 'overview' && (
+        <>
 
       {/* High-Level Overview Metrics Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -291,7 +349,14 @@ export default function DashboardPage() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2 self-start sm:self-auto">
+          <div className="flex items-center gap-2.5 self-start sm:self-auto">
+            <button
+              onClick={() => setIsCreateCircleOpen(true)}
+              className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xs transition-colors flex items-center gap-1.5 cursor-pointer"
+            >
+              <PlusCircle className="w-3.5 h-3.5" />
+              <span>Create Study Room</span>
+            </button>
             <Link
               to="/groups"
               className="text-xs font-bold text-[var(--primary)] hover:underline flex items-center gap-1"
@@ -417,6 +482,17 @@ export default function DashboardPage() {
           ))}
         </div>
       </div>
+      </>
+      )}
+
+      {/* Create Study Room Modal accessible to all */}
+      <CreateGroupModal
+        isOpen={isCreateCircleOpen}
+        onClose={() => setIsCreateCircleOpen(false)}
+        onCreated={() => {
+          setIsCreateCircleOpen(false);
+        }}
+      />
     </div>
   );
 }

@@ -61,6 +61,7 @@ export const api = {
     if (params.goal) query.set('goal', params.goal);
     if (params.day) query.set('day', params.day);
     if (params.search) query.set('search', params.search);
+    if (params.sameLevelOnly) query.set('sameLevelOnly', params.sameLevelOnly);
     return request(`/users?${query.toString()}`);
   },
   getUserById: (id) => request(`/users/${id}`),
@@ -134,9 +135,22 @@ export const api = {
     return request(`/groups?${query.toString()}`);
   },
   getGroupById: (id) => request(`/groups/${id}`),
-  createGroup: (payload) =>
-    request('/groups', { method: 'POST', body: JSON.stringify(payload) }),
-  joinGroup: (id) => request(`/groups/${id}/join`, { method: 'POST' }),
+  createGroup: async (payload) => {
+    const res = await request('/groups', { method: 'POST', body: JSON.stringify(payload) });
+    if (res?.token) {
+      setAuthToken(res.token);
+      window.dispatchEvent(new CustomEvent('auth:updated', { detail: res.user }));
+    }
+    return res;
+  },
+  joinGroup: async (id, payload = {}) => {
+    const res = await request(`/groups/${id}/join`, { method: 'POST', body: JSON.stringify(payload) });
+    if (res?.token) {
+      setAuthToken(res.token);
+      window.dispatchEvent(new CustomEvent('auth:updated', { detail: res.user }));
+    }
+    return res;
+  },
   leaveGroup: (id) => request(`/groups/${id}/leave`, { method: 'POST' }),
   postGroupMessage: (id, payload) =>
     request(`/groups/${id}/messages`, { method: 'POST', body: JSON.stringify(payload) }),

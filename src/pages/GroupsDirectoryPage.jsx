@@ -18,6 +18,7 @@ import {
 import { api } from '../services/api.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import BismillahHeader from '../components/BismillahHeader.jsx';
+import BismillahLoader from '../components/BismillahLoader.jsx';
 import CreateGroupModal from '../components/CreateGroupModal.jsx';
 
 const CATEGORIES = [
@@ -62,11 +63,6 @@ export default function GroupsDirectoryPage() {
   async function handleJoinCircle(e, group) {
     e.preventDefault();
     e.stopPropagation();
-
-    if (!user) {
-      navigate('/login');
-      return;
-    }
 
     if (group.is_member) {
       navigate(`/groups/${group.id}`);
@@ -159,10 +155,11 @@ export default function GroupsDirectoryPage() {
 
       {/* Circles Grid */}
       {loading ? (
-        <div className="py-20 text-center space-y-3">
-          <div className="w-10 h-10 border-3 border-[var(--primary)] border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-xs font-semibold text-[var(--text-muted)]">Loading study circles...</p>
-        </div>
+        <BismillahLoader
+          message="Loading Qur'an Study Circles & Halaqahs..."
+          submessage="In the name of Allah, the Entirely Merciful, the Especially Merciful"
+          className="py-12"
+        />
       ) : groups.length === 0 ? (
         <div className="p-12 text-center rounded-3xl border border-dashed border-[var(--border-color)] bg-[var(--bg-card)] space-y-4">
           <div className="w-14 h-14 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 text-[var(--primary)] flex items-center justify-center mx-auto">

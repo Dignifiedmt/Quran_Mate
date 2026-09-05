@@ -4,16 +4,27 @@ import { query, get, run } from '../database/database.js';
 export async function getUsers(req, res) {
   try {
     const currentUserId = req.user.id;
-    const { stage, goal, day, search } = req.query;
+    const { stage, goal, day, search, sameLevelOnly } = req.query;
+
+    // Get current user's stage and memorized portion to personalize matching
+    const currentUser = await get(
+      'SELECT memorization_stage, memorized_from_surah, memorized_to_surah FROM users WHERE id = ?',
+      [currentUserId]
+    );
+    const userStage = currentUser?.memorization_stage || 'Beginning';
 
     let sql = `
-      SELECT u.id, u.name, u.bio, u.memorization_stage, u.goal, u.avatar_color, u.created_at
+      SELECT u.id, u.name, u.bio, u.memorization_stage, u.memorized_from_surah, u.memorized_to_surah, u.goal, u.avatar_color, u.created_at,
+             (CASE WHEN u.memorization_stage = ? THEN 1 ELSE 0 END) as is_same_level
       FROM users u
       WHERE u.id != ?
     `;
-    const params = [currentUserId];
+    const params = [userStage, currentUserId];
 
-    if (stage && stage !== 'all') {
+    if (sameLevelOnly === 'true') {
+      sql += ` AND u.memorization_stage = ?`;
+      params.push(userStage);
+    } else if (stage && stage !== 'all') {
       sql += ` AND u.memorization_stage = ?`;
       params.push(stage);
     }
@@ -28,7 +39,8 @@ export async function getUsers(req, res) {
       params.push(`%${search.trim()}%`, `%${search.trim()}%`);
     }
 
-    sql += ` ORDER BY u.created_at DESC`;
+    // Always rank same-level learners at the very top, followed by newest
+    sql += ` ORDER BY is_same_level DESC, u.created_at DESC`;
 
     const learners = await query(sql, params);
 
@@ -61,8 +73,12 @@ export async function getUsers(req, res) {
           [learner.id, currentUserId]
         );
 
+        const isSameLevel = learner.memorization_stage === userStage;
+
         return {
           ...learner,
+          sameLevelMatch: isSameLevel,
+          currentUserStage: userStage,
           availability: availList,
           isPartner: !!partnership,
           hasSentPendingRequest: !!sentRequest,
@@ -93,7 +109,7 @@ export async function getUserById(req, res) {
     const targetUserId = parseInt(req.params.id, 10);
 
     const learner = await get(
-      `SELECT id, name, bio, memorization_stage, goal, avatar_color, created_at
+      `SELECT id, name, bio, memorization_stage, memorized_from_surah, memorized_to_surah, goal, avatar_color, created_at
        FROM users WHERE id = ?`,
       [targetUserId]
     );
@@ -142,21 +158,24 @@ export async function getUserById(req, res) {
 export async function updateMe(req, res) {
   try {
     const currentUserId = req.user.id;
-    const { name, bio, memorization_stage, goal, avatar_color } = req.body;
+    const { name, bio, memorization_stage, memorized_from_surah, memorized_to_surah, goal, avatar_color } = req.body;
 
     if (!name || !name.trim()) {
       return res.status(400).json({ error: 'Name cannot be empty' });
     }
 
+    const fromSurah = Number(memorized_from_surah) || 1;
+    const toSurah = Number(memorized_to_surah) || 114;
+
     await run(
       `UPDATE users
-       SET name = ?, bio = ?, memorization_stage = ?, goal = ?, avatar_color = ?, updated_at = CURRENT_TIMESTAMP
+       SET name = ?, bio = ?, memorization_stage = ?, memorized_from_surah = ?, memorized_to_surah = ?, goal = ?, avatar_color = ?, updated_at = CURRENT_TIMESTAMP
        WHERE id = ?`,
-      [name.trim(), bio || '', memorization_stage || 'Beginning', goal || 'Memorize consistently', avatar_color || '#047857', currentUserId]
+      [name.trim(), bio || '', memorization_stage || 'Beginning', fromSurah, toSurah, goal || 'Memorize consistently', avatar_color || '#047857', currentUserId]
     );
 
     const updated = await get(
-      `SELECT id, name, email, bio, memorization_stage, goal, avatar_color, created_at
+      `SELECT id, name, email, bio, memorization_stage, memorized_from_surah, memorized_to_surah, goal, avatar_color, created_at
        FROM users WHERE id = ?`,
       [currentUserId]
     );

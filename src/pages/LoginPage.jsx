@@ -1,15 +1,21 @@
 // Sign In Page
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, ArrowRight, AlertCircle } from 'lucide-react';
+import { Mail, Lock, ArrowRight, AlertCircle, BookOpen, ChevronDown } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import BrandLogo from '../components/BrandLogo.jsx';
+import PortionMemorizedSelector from '../components/PortionMemorizedSelector.jsx';
+import { api } from '../services/api.js';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPortionAdjust, setShowPortionAdjust] = useState(false);
+  const [fromSurah, setFromSurah] = useState(78);
+  const [toSurah, setToSurah] = useState(114);
+
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -18,8 +24,21 @@ export default function LoginPage() {
     setErrorMsg('');
     setIsSubmitting(true);
     try {
-      await login(email, password);
-      navigate('/discover');
+      const loggedUser = await login(email, password);
+      // If user customized portion during sign in, save it to their profile
+      if (showPortionAdjust && loggedUser) {
+        try {
+          await api.updateProfile({
+            name: loggedUser.name,
+            memorized_from_surah: fromSurah,
+            memorized_to_surah: toSurah,
+            memorization_stage: fromSurah >= 78 ? 'Juz 30' : (fromSurah >= 67 ? 'Juz 29–30' : 'Juz 1–5')
+          });
+        } catch {
+          // Non-blocking
+        }
+      }
+      navigate('/dashboard');
     } catch (err) {
       setErrorMsg(err.message || 'Invalid credentials');
     } finally {
@@ -27,9 +46,11 @@ export default function LoginPage() {
     }
   };
 
-  const handleQuickFill = (fillEmail, fillPassword) => {
+  const handleQuickFill = (fillEmail, fillPassword, defaultFrom = 78, defaultTo = 114) => {
     setEmail(fillEmail);
     setPassword(fillPassword);
+    setFromSurah(defaultFrom);
+    setToSurah(defaultTo);
   };
 
   return (
@@ -87,10 +108,40 @@ export default function LoginPage() {
               </div>
             </div>
 
+            {/* Portion You Memorize Selector in Sign In */}
+            <div className="pt-2 border-t border-[var(--border-color)]">
+              <button
+                type="button"
+                onClick={() => setShowPortionAdjust(!showPortionAdjust)}
+                className="w-full flex items-center justify-between text-xs font-semibold text-[var(--text-primary)] hover:text-[var(--primary)] py-1.5 transition-colors cursor-pointer"
+              >
+                <div className="flex items-center gap-1.5">
+                  <BookOpen className="w-3.5 h-3.5 text-[var(--primary)]" />
+                  <span>Portion You Memorize (From Surah to Surah)</span>
+                </div>
+                <ChevronDown
+                  className={`w-3.5 h-3.5 text-[var(--text-muted)] transition-transform duration-200 ${
+                    showPortionAdjust ? 'rotate-180 text-[var(--primary)]' : ''
+                  }`}
+                />
+              </button>
+
+              {showPortionAdjust && (
+                <div className="mt-2.5 p-3 rounded-2xl border border-[var(--border-color)] bg-[var(--bg-subtle)] animate-in fade-in duration-200">
+                  <PortionMemorizedSelector
+                    fromSurah={fromSurah}
+                    toSurah={toSurah}
+                    onChangeFrom={(val) => setFromSurah(val)}
+                    onChangeTo={(val) => setToSurah(val)}
+                  />
+                </div>
+              )}
+            </div>
+
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full py-2.5 rounded-xl text-xs font-bold bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] shadow-xs transition-colors flex items-center justify-center gap-1.5"
+              className="w-full py-2.5 rounded-xl text-xs font-bold bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
             >
               <span>{isSubmitting ? 'Signing In...' : 'Sign In'}</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -100,24 +151,28 @@ export default function LoginPage() {
           {/* Sample Profiles Quick Fill */}
           <div className="mt-6 pt-5 border-t border-[var(--border-color)]">
             <div className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2.5 text-center">
-              Sample Learner Accounts
+              Sample Learner Accounts (Instant Sign-in)
             </div>
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
-                onClick={() => handleQuickFill('maryam@quranmate.demo', 'password123')}
+                onClick={() => handleQuickFill('maryam@quranmate.demo', 'password123', 1, 4)}
                 className="px-3 py-2 rounded-xl border border-[var(--border-color)] bg-[var(--bg-subtle)] text-[11px] font-medium text-[var(--text-secondary)] hover:text-[var(--primary)] hover:border-[var(--primary-border)] text-left transition-colors"
               >
                 <div className="font-bold text-[var(--text-primary)]">Maryam</div>
-                <div className="text-[10px] text-[var(--text-muted)] truncate">Juz 1–5 (Seeking)</div>
+                <div className="text-[10px] text-emerald-700 dark:text-emerald-300 font-semibold truncate">
+                  Surah 1 → 4 (Juz 1–5)
+                </div>
               </button>
               <button
                 type="button"
-                onClick={() => handleQuickFill('aisha@quranmate.demo', 'password123')}
+                onClick={() => handleQuickFill('aisha@quranmate.demo', 'password123', 67, 114)}
                 className="px-3 py-2 rounded-xl border border-[var(--border-color)] bg-[var(--bg-subtle)] text-[11px] font-medium text-[var(--text-secondary)] hover:text-[var(--primary)] hover:border-[var(--primary-border)] text-left transition-colors"
               >
                 <div className="font-bold text-[var(--text-primary)]">Aisha</div>
-                <div className="text-[10px] text-[var(--text-muted)] truncate">Juz 29–30 (Paired)</div>
+                <div className="text-[10px] text-amber-700 dark:text-amber-300 font-semibold truncate">
+                  Surah 67 → 114 (Juz 29–30)
+                </div>
               </button>
             </div>
           </div>

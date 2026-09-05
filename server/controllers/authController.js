@@ -6,7 +6,7 @@ import { JWT_SECRET } from '../middleware/auth.js';
 
 export async function register(req, res) {
   try {
-    const { name, email, password, confirmPassword } = req.body;
+    const { name, email, password, confirmPassword, memorized_from_surah, memorized_to_surah, memorization_stage } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({ error: 'Name, email, and password are required' });
@@ -35,10 +35,14 @@ export async function register(req, res) {
     const colors = ['#047857', '#0f766e', '#854d0e', '#1e3a8a', '#4338ca', '#065f46', '#701a75', '#15803d'];
     const avatarColor = colors[Math.floor(Math.random() * colors.length)];
 
+    const fromSurah = Number(memorized_from_surah) || 1;
+    const toSurah = Number(memorized_to_surah) || 114;
+    const stage = memorization_stage || (fromSurah >= 78 ? 'Juz 30' : (fromSurah >= 67 ? 'Juz 29–30' : 'Beginning'));
+
     const result = await run(
-      `INSERT INTO users (name, email, password_hash, bio, memorization_stage, goal, avatar_color)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [name.trim(), cleanEmail, passwordHash, '', 'Beginning', 'Memorize new Ayahs daily', avatarColor]
+      `INSERT INTO users (name, email, password_hash, bio, memorization_stage, memorized_from_surah, memorized_to_surah, goal, avatar_color)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [name.trim(), cleanEmail, passwordHash, '', stage, fromSurah, toSurah, 'Memorize consistently', avatarColor]
     );
 
     const user = {
@@ -46,8 +50,10 @@ export async function register(req, res) {
       name: name.trim(),
       email: cleanEmail,
       bio: '',
-      memorization_stage: 'Beginning',
-      goal: 'Memorize new Ayahs daily',
+      memorization_stage: stage,
+      memorized_from_surah: fromSurah,
+      memorized_to_surah: toSurah,
+      goal: 'Memorize consistently',
       avatar_color: avatarColor
     };
 
@@ -131,7 +137,7 @@ export async function demoLogin(req, res) {
 export async function getMe(req, res) {
   try {
     const user = await get(
-      `SELECT id, name, email, bio, memorization_stage, goal, avatar_color, created_at
+      `SELECT id, name, email, bio, memorization_stage, memorized_from_surah, memorized_to_surah, goal, avatar_color, created_at
        FROM users WHERE id = ?`,
       [req.user.id]
     );

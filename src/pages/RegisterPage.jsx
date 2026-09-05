@@ -1,15 +1,19 @@
 // Sign Up Page (Screen 2)
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { User, Mail, Lock, ArrowRight, AlertCircle } from 'lucide-react';
+import { User, Mail, Lock, ArrowRight, AlertCircle, Sparkles } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import BrandLogo from '../components/BrandLogo.jsx';
+import PortionMemorizedSelector from '../components/PortionMemorizedSelector.jsx';
 
 export default function RegisterPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [fromSurah, setFromSurah] = useState(78);
+  const [toSurah, setToSurah] = useState(114);
+  const [memorizationStage, setMemorizationStage] = useState('Juz 30');
   const [errorMsg, setErrorMsg] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { register } = useAuth();
@@ -31,9 +35,13 @@ export default function RegisterPage() {
 
     setIsSubmitting(true);
     try {
-      await register(name, email, password, confirmPassword);
-      // Immediately guide to profile setup
-      navigate('/profile/setup');
+      await register(name, email, password, confirmPassword, {
+        memorized_from_surah: fromSurah,
+        memorized_to_surah: toSurah,
+        memorization_stage: memorizationStage
+      });
+      // Guide to dashboard or profile setup
+      navigate('/dashboard');
     } catch (err) {
       setErrorMsg(err.message || 'Registration failed');
     } finally {
@@ -129,12 +137,25 @@ export default function RegisterPage() {
               </div>
             </div>
 
+            {/* Portion You Memorize (From Surah to Surah) */}
+            <div className="pt-2 border-t border-[var(--border-color)]">
+              <PortionMemorizedSelector
+                fromSurah={fromSurah}
+                toSurah={toSurah}
+                onChangeFrom={(val) => setFromSurah(val)}
+                onChangeTo={(val) => setToSurah(val)}
+                onApplyPreset={(preset) => {
+                  setMemorizationStage(preset.stage);
+                }}
+              />
+            </div>
+
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full py-2.5 rounded-xl text-xs font-bold bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] shadow-xs transition-colors flex items-center justify-center gap-1.5"
+              className="w-full py-2.5 rounded-xl text-xs font-bold bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
             >
-              <span>{isSubmitting ? 'Creating Account...' : 'Continue to Profile Setup'}</span>
+              <span>{isSubmitting ? 'Creating Account...' : 'Create Account & Start Learning'}</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </form>

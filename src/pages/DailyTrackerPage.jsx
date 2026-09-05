@@ -22,6 +22,7 @@ import { api } from '../services/api.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import WeeklyProgressChart from '../components/WeeklyProgressChart.jsx';
 import SessionScheduler from '../components/SessionScheduler.jsx';
+import BismillahLoader from '../components/BismillahLoader.jsx';
 
 export default function DailyTrackerPage() {
   const { user } = useAuth();
@@ -157,6 +158,15 @@ export default function DailyTrackerPage() {
 
   const todayStr = new Date().toISOString().split('T')[0];
   const yesterdayStr = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+
+  if (loading) {
+    return (
+      <BismillahLoader
+        message="Loading your Qur'an Habit Tracker & consistency metrics..."
+        submessage="In the name of Allah, the Entirely Merciful, the Especially Merciful"
+      />
+    );
+  }
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">

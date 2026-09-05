@@ -92,6 +92,18 @@ body {
   line-height: 2.2;
 }
 
+/* Sacred Bismillah Calligraphy - Pitch Dark Ink in Light Theme, Luminous Emerald in Dark */
+.bismillah-calligraphy {
+  color: #050505 !important;
+  font-weight: 800;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.08);
+}
+
+.dark .bismillah-calligraphy {
+  color: #d1fae5 !important;
+  text-shadow: 0 0 16px rgba(16, 185, 129, 0.25);
+}
+
 /* Custom scrollbars */
 ::-webkit-scrollbar {
   width: 6px;

@@ -26,6 +26,7 @@ import {
 import { api } from '../services/api.js';
 import { JUZ_LIST } from '../data/juzData.js';
 import BismillahHeader from '../components/BismillahHeader.jsx';
+import BismillahLoader from '../components/BismillahLoader.jsx';
 
 // Available authentic Qur'an Reciters from Islamic Network CDN
 const RECITERS = [
@@ -313,10 +314,10 @@ export default function AyahFinderPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 space-y-6">
       {/* Audio element */}
-      {audioSrc && (
+      {audioSrc ? (
         <audio
           ref={audioRef}
-          src={audioSrc}
+          src={audioSrc || null}
           onTimeUpdate={() => setCurrentTime(audioRef.current?.currentTime || 0)}
           onLoadedMetadata={() => setAudioDuration(audioRef.current?.duration || 0)}
           onEnded={handleAudioEnded}
@@ -325,7 +326,7 @@ export default function AyahFinderPage() {
             setAudioLoading(false);
           }}
         />
-      )}
+      ) : null}
 
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -553,7 +554,13 @@ export default function AyahFinderPage() {
       )}
 
       {/* Main Qur'an and Ayah Card */}
-      {currentAyah && (
+      {loading ? (
+        <BismillahLoader
+          message="Loading Ayah, Translation & Recitation..."
+          submessage="In the name of Allah, the Entirely Merciful, the Especially Merciful"
+          className="py-12"
+        />
+      ) : currentAyah ? (
         <div className="rounded-3xl border border-[var(--border-color)] bg-[var(--bg-surface)] p-6 sm:p-10 shadow-sm space-y-6">
           {/* Card Top: Surah Details, Ayah Number & Actions */}
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--border-color)] pb-4">
@@ -771,7 +778,7 @@ export default function AyahFinderPage() {
             </button>
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

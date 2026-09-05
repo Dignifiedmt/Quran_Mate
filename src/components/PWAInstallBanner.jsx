@@ -62,7 +62,7 @@ export default function PWAInstallBanner() {
       {!isDismissed && (
         <aside
           aria-label="Install Quran Mate application"
-          className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:max-w-md z-40 animate-in fade-in slide-in-from-bottom-5 duration-300"
+          className="fixed bottom-20 left-4 right-4 sm:bottom-6 sm:left-auto sm:right-6 sm:max-w-md z-30 animate-in fade-in slide-in-from-bottom-5 duration-300"
         >
           <div className="bg-[var(--bg-surface)] border border-emerald-500/30 dark:border-emerald-500/40 rounded-2xl shadow-xl p-3.5 sm:p-4 backdrop-blur-md bg-opacity-95 dark:bg-opacity-95 ring-1 ring-black/5 dark:ring-white/10 flex items-center gap-3 sm:gap-3.5">
             {/* App Icon */}

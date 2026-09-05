@@ -20,12 +20,22 @@ export default function LearnerCard({ learner, onRequestClick }) {
               <h3 className="font-bold text-base text-[var(--text-primary)] group-hover:text-[var(--primary)] transition-colors">
                 {learner.name}
               </h3>
-              <div className="flex items-center gap-1.5 mt-0.5">
+              <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[var(--primary-light)] text-[var(--primary)] border border-[var(--primary-border)]">
                   <BookOpen className="w-3 h-3" />
                   {learner.memorization_stage || 'Beginning'}
                 </span>
+                {learner.sameLevelMatch && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-700">
+                    <span>🎯 Same Level Match</span>
+                  </span>
+                )}
               </div>
+              {learner.memorized_from_surah && learner.memorized_to_surah && (
+                <div className="text-[10px] font-medium text-[var(--text-muted)] mt-1">
+                  Memorized: Surah {learner.memorized_from_surah} → {learner.memorized_to_surah}
+                </div>
+              )}
             </div>
           </div>
 
