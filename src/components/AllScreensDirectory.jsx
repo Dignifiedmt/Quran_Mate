@@ -66,7 +66,7 @@ export const SCREEN_SECTIONS = [
         name: 'Ayah Finder & Tafsir',
         path: '/ayah-finder',
         icon: Search,
-        description: 'Thematic ayah search, 4 reciters, repeat audio loop & Surah/Juz index browser',
+        description: 'Thematic ayah search, 9 verified Qurra reciters, repeat audio loop & Surah/Juz index browser',
         badge: 'Audio & Search',
         color: 'text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/40 border-teal-200 dark:border-teal-800',
       },

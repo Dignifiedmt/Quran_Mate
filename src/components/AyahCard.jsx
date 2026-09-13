@@ -14,18 +14,29 @@ export default function AyahCard({ ayah, onBookmarkChange, onReflect }) {
   const { user, activePartnershipId } = useAuth();
   const navigate = useNavigate();
 
-  // Audio URL: use provided audioUrl or construct Islamic Network CDN URL
-  const audioUrl =
+  // Audio URL: use provided audioUrl or construct Islamic Network CDN URL with EveryAyah fallback
+  const primaryAudioUrl =
     ayah.audioUrl ||
     (ayah.number ? `https://cdn.islamic.network/quran/audio/128/ar.alafasy/${ayah.number}.mp3` : null);
+  const fallbackAudioUrl =
+    ayah.surah_number && ayah.ayah_number
+      ? `https://everyayah.com/data/Alafasy_128kbps/${String(ayah.surah_number).padStart(3, '0')}${String(ayah.ayah_number).padStart(3, '0')}.mp3`
+      : null;
 
   const toggleAudio = () => {
-    if (!audioUrl) return;
+    if (!primaryAudioUrl && !fallbackAudioUrl) return;
 
     if (!audioRef.current) {
-      audioRef.current = new Audio(audioUrl);
+      audioRef.current = new Audio(primaryAudioUrl || fallbackAudioUrl);
       audioRef.current.onended = () => setIsPlaying(false);
-      audioRef.current.onerror = () => setIsPlaying(false);
+      audioRef.current.onerror = () => {
+        if (fallbackAudioUrl && audioRef.current.src !== fallbackAudioUrl) {
+          audioRef.current.src = fallbackAudioUrl;
+          audioRef.current.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
+        } else {
+          setIsPlaying(false);
+        }
+      };
     }
 
     if (isPlaying) {

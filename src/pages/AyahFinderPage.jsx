@@ -25,16 +25,9 @@ import {
 } from 'lucide-react';
 import { api } from '../services/api.js';
 import { JUZ_LIST } from '../data/juzData.js';
+import { QURRA_LIST, getAyahAudioUrl, getAyahFallbackUrl, getReciterById } from '../data/quranReciters.js';
 import BismillahHeader from '../components/BismillahHeader.jsx';
 import BismillahLoader from '../components/BismillahLoader.jsx';
-
-// Available authentic Qur'an Reciters from Islamic Network CDN
-const RECITERS = [
-  { id: 'ar.alafasy', name: 'Mishary Rashid Alafasy', style: 'Murattal' },
-  { id: 'ar.abdulbasitmujawwad', name: 'AbdulBaset AbdulSamad', style: 'Mujawwad' },
-  { id: 'ar.husary', name: 'Mahmoud Khalil Al-Husary', style: 'Classic Murattal' },
-  { id: 'ar.saadalghamdi', name: 'Saad Al-Ghamadi', style: 'Rhythmic' },
-];
 
 export default function AyahFinderPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -52,6 +45,7 @@ export default function AyahFinderPage() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioLoading, setAudioLoading] = useState(false);
   const [selectedReciter, setSelectedReciter] = useState('ar.alafasy');
+  const [usingFallbackAudio, setUsingFallbackAudio] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [isLooping, setIsLooping] = useState(false);
   const [autoAdvance, setAutoAdvance] = useState(false);
@@ -82,14 +76,15 @@ export default function AyahFinderPage() {
     fetchSurahs();
   }, []);
 
-  // Compute audio stream URL based on selected reciter and ayahInQuran
-  const getAudioUrl = (ayah) => {
-    if (!ayah) return '';
-    const globalNum = ayah.ayahInQuran || ayah.number;
-    if (globalNum) {
-      return `https://cdn.islamic.network/quran/audio/128/${selectedReciter}/${globalNum}.mp3`;
-    }
-    return ayah.audioUrl || '';
+  // Compute audio stream URL based on selected reciter and ayah coordinates
+  const getAudioSources = (ayah) => {
+    if (!ayah) return { primary: '', fallback: '' };
+    const globalNum = ayah.ayahInQuran || ayah.number || 1;
+    const surahNum = ayah.surahNumber || selectedSurah;
+    const ayahInSurah = ayah.ayahNumber || ayah.numberInSurah || selectedAyah;
+    const primary = getAyahAudioUrl(selectedReciter, surahNum, ayahInSurah, globalNum);
+    const fallback = getAyahFallbackUrl(selectedReciter, surahNum, ayahInSurah, globalNum);
+    return { primary, fallback };
   };
 
   // Fetch Ayah data when selectedSurah or selectedAyah changes
@@ -97,6 +92,7 @@ export default function AyahFinderPage() {
     try {
       setLoading(true);
       setErrorMsg('');
+      setUsingFallbackAudio(false);
       if (audioRef.current) {
         audioRef.current.pause();
         setIsPlaying(false);
@@ -309,22 +305,40 @@ export default function AyahFinderPage() {
     { label: 'Al-Ikhlas', s: 112, a: 1 },
   ];
 
-  const audioSrc = getAudioUrl(currentAyah);
+  const { primary: primaryAudioSrc, fallback: fallbackAudioSrc } = getAudioSources(currentAyah);
+  const activeAudioSrc = usingFallbackAudio && fallbackAudioSrc ? fallbackAudioSrc : primaryAudioSrc;
+
+  const handleAudioError = () => {
+    if (!usingFallbackAudio && fallbackAudioSrc && fallbackAudioSrc !== primaryAudioSrc) {
+      console.warn('Primary reciter CDN stream had an issue, falling back to secondary CDN...');
+      setUsingFallbackAudio(true);
+      if (audioRef.current) {
+        audioRef.current.load();
+        if (isPlaying) {
+          audioRef.current.play().catch(() => {
+            setIsPlaying(false);
+            setAudioLoading(false);
+          });
+        }
+      }
+    } else {
+      setIsPlaying(false);
+      setAudioLoading(false);
+    }
+  };
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 space-y-6">
       {/* Audio element */}
-      {audioSrc ? (
+      {activeAudioSrc ? (
         <audio
+          key={`${selectedReciter}-${usingFallbackAudio ? 'fallback' : 'primary'}-${currentAyah?.number || currentAyah?.ayahInQuran || '0'}`}
           ref={audioRef}
-          src={audioSrc || null}
+          src={activeAudioSrc || null}
           onTimeUpdate={() => setCurrentTime(audioRef.current?.currentTime || 0)}
           onLoadedMetadata={() => setAudioDuration(audioRef.current?.duration || 0)}
           onEnded={handleAudioEnded}
-          onError={() => {
-            setIsPlaying(false);
-            setAudioLoading(false);
-          }}
+          onError={handleAudioError}
         />
       ) : null}
 
@@ -669,13 +683,14 @@ export default function AyahFinderPage() {
                     value={selectedReciter}
                     onChange={(e) => {
                       setSelectedReciter(e.target.value);
+                      setUsingFallbackAudio(false);
                       setIsPlaying(false);
                     }}
                     className="text-[11px] font-medium text-[var(--text-secondary)] bg-transparent border-0 p-0 focus:outline-none cursor-pointer hover:text-[var(--text-primary)]"
                   >
-                    {RECITERS.map((r) => (
+                    {QURRA_LIST.map((r) => (
                       <option key={r.id} value={r.id}>
-                        {r.name} ({r.style})
+                        {r.name} — {r.arabicName} ({r.style})
                       </option>
                     ))}
                   </select>
