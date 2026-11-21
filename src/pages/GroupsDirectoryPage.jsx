@@ -12,8 +12,10 @@ import {
   Calendar,
   Layers,
   ArrowRight,
-  ShieldCheck,
-  Video
+  Video,
+  LogIn,
+  UserPlus,
+  X
 } from 'lucide-react';
 import { api } from '../services/api.js';
 import { useAuth } from '../context/AuthContext.jsx';
@@ -40,6 +42,7 @@ export default function GroupsDirectoryPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [actionLoadingId, setActionLoadingId] = useState(null);
+  const [signInPromptGroup, setSignInPromptGroup] = useState(null);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -63,9 +66,22 @@ export default function GroupsDirectoryPage() {
     }
   }
 
+  function handleOpenCreateModal() {
+    if (!user) {
+      setSignInPromptGroup('create');
+      return;
+    }
+    setIsCreateModalOpen(true);
+  }
+
   async function handleJoinCircle(e, group) {
     e.preventDefault();
     e.stopPropagation();
+
+    if (!user) {
+      setSignInPromptGroup(group.name || 'this study circle');
+      return;
+    }
 
     if (group.is_member) {
       navigate(`/groups/${group.id}`);
@@ -78,6 +94,9 @@ export default function GroupsDirectoryPage() {
       navigate(`/groups/${group.id}`);
     } catch (err) {
       console.error('Failed to join circle:', err);
+      if (err.status === 401) {
+        setSignInPromptGroup(group.name || 'this study circle');
+      }
     } finally {
       setActionLoadingId(null);
     }
@@ -104,17 +123,17 @@ export default function GroupsDirectoryPage() {
 
           <div className="pt-2 flex flex-wrap items-center gap-3">
             <button
-              onClick={() => setIsCreateModalOpen(true)}
-              className="px-5 py-2.5 rounded-2xl bg-white text-emerald-900 font-bold text-xs sm:text-sm hover:bg-emerald-50 transition-colors shadow-md flex items-center gap-2"
+              onClick={handleOpenCreateModal}
+              className="px-5 py-2.5 rounded-2xl bg-white text-emerald-900 font-bold text-xs sm:text-sm hover:bg-emerald-50 transition-colors shadow-md flex items-center gap-2 cursor-pointer"
             >
               <Plus className="w-4 h-4" />
-              <span>Start a New Circle</span>
+              <span>{user ? 'Start a New Circle' : 'Sign in to Start a Circle'}</span>
             </button>
             <Link
-              to="/partnership"
+              to={user ? '/partnership' : '/login'}
               className="px-4 py-2.5 rounded-2xl bg-emerald-800/60 hover:bg-emerald-800 border border-emerald-700/60 text-emerald-100 font-medium text-xs sm:text-sm transition-colors flex items-center gap-2"
             >
-              <span>1-on-1 Partner Pairing</span>
+              <span>{user ? '1-on-1 Partner Pairing' : 'Sign In to Join'}</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
@@ -123,6 +142,41 @@ export default function GroupsDirectoryPage() {
         {/* Decorative background Islamic geometry glow */}
         <div className="absolute right-0 top-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
       </div>
+
+      {/* Sign-In Notice Banner for Unauthenticated Visitors */}
+      {!user && (
+        <div className="rounded-2xl border border-amber-300/80 dark:border-amber-800/70 bg-amber-50/90 dark:bg-amber-950/30 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-2xs">
+          <div className="flex items-start gap-3">
+            <div className="w-9 h-9 rounded-xl bg-amber-500/15 text-amber-700 dark:text-amber-300 flex items-center justify-center shrink-0">
+              <LogIn className="w-4 h-4" />
+            </div>
+            <div>
+              <h2 className="text-sm font-bold text-amber-950 dark:text-amber-100">
+                Sign in to join the study circle
+              </h2>
+              <p className="text-xs text-amber-900/80 dark:text-amber-200/80 mt-0.5">
+                You can browse available Qur&rsquo;an circles freely. Sign in or create an account to join a halaqah, claim a Juz, or post reflections.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Link
+              to="/login"
+              className="px-4 py-2 rounded-xl bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white text-xs font-bold transition-colors flex items-center gap-1.5 whitespace-nowrap"
+            >
+              <LogIn className="w-3.5 h-3.5" />
+              <span>Sign In</span>
+            </Link>
+            <Link
+              to="/register"
+              className="px-3.5 py-2 rounded-xl border border-amber-300 dark:border-amber-700 bg-[var(--bg-surface)] text-[var(--text-primary)] hover:bg-[var(--bg-subtle)] text-xs font-semibold transition-colors flex items-center gap-1.5 whitespace-nowrap"
+            >
+              <UserPlus className="w-3.5 h-3.5" />
+              <span>Sign Up</span>
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* Filter & Search Bar */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -175,11 +229,11 @@ export default function GroupsDirectoryPage() {
             </p>
           </div>
           <button
-            onClick={() => setIsCreateModalOpen(true)}
-            className="px-5 py-2.5 rounded-xl bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white text-xs font-bold transition-colors shadow-xs inline-flex items-center gap-2"
+            onClick={handleOpenCreateModal}
+            className="px-5 py-2.5 rounded-xl bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white text-xs font-bold transition-colors shadow-xs inline-flex items-center gap-2 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
-            <span>Create Study Circle</span>
+            <span>{user ? 'Create Study Circle' : 'Sign in to Create Circle'}</span>
           </button>
         </div>
       ) : (
@@ -265,19 +319,70 @@ export default function GroupsDirectoryPage() {
                   <button
                     onClick={(e) => handleJoinCircle(e, group)}
                     disabled={actionLoadingId === group.id}
-                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5 ${
+                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer ${
                       isMember
-                        ? 'bg-[var(--primary)] text-white hover:bg-[var(--primary-dark)]'
+                        ? 'bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)]'
                         : 'bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100'
                     }`}
                   >
-                    <span>{isMember ? 'Enter Room' : 'Join Circle'}</span>
+                    <span>
+                      {isMember
+                        ? 'Enter Room'
+                        : user
+                          ? 'Join Circle'
+                          : 'Sign in to Join'}
+                    </span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Sign In Required Modal when clicking Join/Create without signing in */}
+      {signInPromptGroup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="relative w-full max-w-md rounded-3xl border border-[var(--border-color)] bg-[var(--bg-surface)] p-6 shadow-2xl space-y-4">
+            <button
+              type="button"
+              onClick={() => setSignInPromptGroup(null)}
+              aria-label="Close"
+              className="absolute right-4 top-4 p-1.5 rounded-xl text-[var(--text-muted)] hover:bg-[var(--bg-subtle)] cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            <div className="w-11 h-11 rounded-2xl bg-emerald-100 dark:bg-emerald-950 text-[var(--primary)] flex items-center justify-center">
+              <LogIn className="w-5 h-5" />
+            </div>
+            <div className="space-y-1.5">
+              <h3 className="text-lg font-extrabold text-[var(--text-primary)]">
+                Sign in to join the study circle
+              </h3>
+              <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+                {signInPromptGroup === 'create'
+                  ? 'Please sign in or create an account to start a new Qur’an study circle.'
+                  : `Please sign in or create an account to join "${signInPromptGroup}", claim a Juz, and participate in live halaqah discussions.`}
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2.5 pt-1">
+              <Link
+                to="/login"
+                className="flex-1 py-2.5 px-4 rounded-xl bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-colors"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                <span>Sign In</span>
+              </Link>
+              <Link
+                to="/register"
+                className="flex-1 py-2.5 px-4 rounded-xl border border-[var(--border-color)] bg-[var(--bg-subtle)] hover:bg-[var(--bg-primary)] text-[var(--text-primary)] text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
+              >
+                <UserPlus className="w-3.5 h-3.5" />
+                <span>Create Account</span>
+              </Link>
+            </div>
+          </div>
         </div>
       )}
 

@@ -6,16 +6,11 @@ import {
   X,
   Users,
   Sparkles,
-  BookOpen,
-  Clock,
-  Target,
-  Calendar,
   Video,
-  Check,
-  User,
-  Flame,
-  Star
+  LogIn,
+  UserPlus
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { api } from '../services/api.js';
 import { useAuth } from '../context/AuthContext.jsx';
 
@@ -69,13 +64,12 @@ export default function CreateGroupModal({ isOpen, onClose, onCreated }) {
   const navigate = useNavigate();
 
   const [name, setName] = useState('');
-  const [guestName, setGuestName] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('Memorization');
   const [targetGoal, setTargetGoal] = useState('Complete collective Quran Khatmah');
   const [meetingSchedule, setMeetingSchedule] = useState('Weekly on Fridays at 07:00 AM UTC');
   const [meetingPlatform, setMeetingPlatform] = useState('google_meet'); // 'google_meet' | 'in_app'
-  const [meetingLink, setMeetingLink] = useState('');
+  const [meetingLink] = useState('');
   const [maxMembers, setMaxMembers] = useState(25);
   const [avatarTheme, setAvatarTheme] = useState('emerald');
   const [submitting, setSubmitting] = useState(false);
@@ -92,6 +86,10 @@ export default function CreateGroupModal({ isOpen, onClose, onCreated }) {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    if (!user) {
+      setError('Please sign in to join or create a study circle.');
+      return;
+    }
     if (!name.trim()) {
       setError('Please provide a name for the study circle');
       return;
@@ -102,7 +100,6 @@ export default function CreateGroupModal({ isOpen, onClose, onCreated }) {
       setError('');
       const res = await api.createGroup({
         name: name.trim(),
-        guest_name: guestName.trim() || undefined,
         description: description.trim(),
         category,
         target_goal: targetGoal.trim(),
@@ -136,14 +133,9 @@ export default function CreateGroupModal({ isOpen, onClose, onCreated }) {
               <Users className="w-5 h-5" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-base sm:text-lg font-bold text-[var(--text-primary)]">
-                  Start a Qur&rsquo;an Study Circle
-                </h2>
-                <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
-                  Open to Everyone
-                </span>
-              </div>
+              <h2 className="text-base sm:text-lg font-bold text-[var(--text-primary)]">
+                Start a Qur&rsquo;an Study Circle
+              </h2>
               <p className="text-xs text-[var(--text-muted)]">
                 Create a collaborative room for group recitation, Khatmah, &amp; halaqahs
               </p>
@@ -157,16 +149,40 @@ export default function CreateGroupModal({ isOpen, onClose, onCreated }) {
           </button>
         </div>
 
-        {/* Guest sister encouragement banner if not logged in */}
-        {!user && (
-          <div className="mb-4 p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-xs flex items-center gap-2.5">
-            <Sparkles className="w-4 h-4 text-emerald-600 shrink-0" />
-            <div className="text-emerald-900 dark:text-emerald-200">
-              <span className="font-bold">No account required:</span> Anyone can create and host a study room instantly! You will enter as host immediately.
+        {!user ? (
+          <div className="py-4 text-center space-y-4">
+            <div className="w-12 h-12 rounded-2xl bg-amber-500/15 text-amber-600 dark:text-amber-300 flex items-center justify-center mx-auto">
+              <LogIn className="w-6 h-6" />
+            </div>
+            <div className="space-y-1.5">
+              <h3 className="text-base font-bold text-[var(--text-primary)]">
+                Sign in to join the study circle
+              </h3>
+              <p className="text-xs text-[var(--text-secondary)] max-w-sm mx-auto leading-relaxed">
+                Please sign in or create an account before starting or joining a Qur&rsquo;an study circle.
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2.5 justify-center pt-1">
+              <Link
+                to="/login"
+                onClick={onClose}
+                className="px-5 py-2.5 rounded-xl bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-colors"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                <span>Sign In</span>
+              </Link>
+              <Link
+                to="/register"
+                onClick={onClose}
+                className="px-5 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-subtle)] text-[var(--text-primary)] hover:bg-[var(--bg-primary)] text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
+              >
+                <UserPlus className="w-3.5 h-3.5" />
+                <span>Create Account</span>
+              </Link>
             </div>
           </div>
-        )}
-
+        ) : (
+        <>
         {error && (
           <div className="mb-4 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 text-rose-700 dark:text-rose-300 text-xs">
             {error}
@@ -198,22 +214,6 @@ export default function CreateGroupModal({ isOpen, onClose, onCreated }) {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Guest Name if not logged in */}
-          {!user && (
-            <div>
-              <label className="block text-xs font-bold text-[var(--text-primary)] mb-1.5 flex items-center gap-1">
-                <User className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Your Name (Sister / Host)</span>
-              </label>
-              <input
-                type="text"
-                value={guestName}
-                onChange={(e) => setGuestName(e.target.value)}
-                placeholder="e.g., Sister Maryam or Sister Hafsah"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm focus:outline-none focus:border-[var(--primary)]"
-              />
-            </div>
-          )}
 
           {/* Group Name */}
           <div>
@@ -385,6 +385,8 @@ export default function CreateGroupModal({ isOpen, onClose, onCreated }) {
             </button>
           </div>
         </form>
+        </>
+        )}
       </div>
     </div>
   );

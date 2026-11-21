@@ -12,15 +12,20 @@ import trackerRoutes from './routes/trackerRoutes.js';
 import sessionRoutes from './routes/sessionRoutes.js';
 import groupRoutes from './routes/groupRoutes.js';
 
+import { promisify } from 'util';
+
+const gzipAsync = promisify(zlib.gzip);
+
 export function createApp() {
   const app = express();
+  app.set('trust proxy', 1);
 
   // Standard middleware
   app.use(cors());
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
 
-  // Lightweight gzip compression for JSON responses > 1KB
+  // Non-blocking gzip compression for JSON responses > 1KB
   app.use((req, res, next) => {
     const origJson = res.json.bind(res);
     res.json = (body) => {
@@ -28,11 +33,15 @@ export function createApp() {
       if (acceptEncoding.includes('gzip')) {
         const jsonStr = JSON.stringify(body);
         if (jsonStr && jsonStr.length > 1024) {
-          const compressed = zlib.gzipSync(jsonStr);
-          res.setHeader('Content-Encoding', 'gzip');
-          res.setHeader('Vary', 'Accept-Encoding');
-          res.setHeader('Content-Type', 'application/json; charset=utf-8');
-          return res.send(compressed);
+          gzipAsync(jsonStr)
+            .then((compressed) => {
+              res.setHeader('Content-Encoding', 'gzip');
+              res.setHeader('Vary', 'Accept-Encoding');
+              res.setHeader('Content-Type', 'application/json; charset=utf-8');
+              res.send(compressed);
+            })
+            .catch(() => origJson(body));
+          return res;
         }
       }
       return origJson(body);

@@ -51,72 +51,11 @@ export async function getTrackerSummary(req, res) {
     const userId = req.user.id;
     const todayStr = getTodayDateStr();
 
-    // 1. Fetch today's logs
-    const todayLogs = await query(
-      `SELECT id, activity_type, portion_covered, pages_count, ayahs_count, duration_minutes, notes, created_at
-       FROM daily_tracker_logs
-       WHERE user_id = ? AND date = ?
-       ORDER BY id DESC`,
-      [userId, todayStr]
-    );
-
-    // 2. Fetch active partnership if any
-    const partnership = await get(
-      `SELECT id, user_a_id, user_b_id, status FROM partnerships
-       WHERE (user_a_id = ? OR user_b_id = ?) AND status = 'active'`,
-      [userId, userId]
-    );
-
-    let partnerInfo = null;
-    if (partnership) {
-      const partnerId = partnership.user_a_id === userId ? partnership.user_b_id : partnership.user_a_id;
-      const partnerUser = await get(
-        `SELECT id, name, memorization_stage, goal, avatar_color FROM users WHERE id = ?`,
-        [partnerId]
-      );
-      const partnerTodayCheckin = await get(
-        `SELECT id, completed, notes FROM checkins
-         WHERE partnership_id = ? AND user_id = ? AND date = ?`,
-        [partnership.id, partnerId, todayStr]
-      );
-
-      partnerInfo = {
-        partnershipId: partnership.id,
-        partner: partnerUser,
-        partnerCompletedToday: partnerTodayCheckin ? partnerTodayCheckin.completed === 1 : false,
-        partnerNotes: partnerTodayCheckin?.notes || '',
-      };
-    }
-
-    // 3. User streak
-    const streak = await calculateUserStreak(userId);
-
-    // 4. Past 30 days totals
     const past30DaysDate = new Date();
     past30DaysDate.setDate(past30DaysDate.getDate() - 30);
     const past30Str = past30DaysDate.toISOString().split('T')[0];
 
-    const past30Stats = await get(
-      `SELECT 
-         COUNT(DISTINCT date) as days_studied,
-         SUM(duration_minutes) as total_minutes,
-         SUM(pages_count) as total_pages,
-         SUM(ayahs_count) as total_ayahs
-       FROM daily_tracker_logs
-       WHERE user_id = ? AND date >= ?`,
-      [userId, past30Str]
-    );
-
-    // 5. Activity breakdown (Hifz vs Murajaah vs Tilawah vs Tadabbur)
-    const activityCounts = await query(
-      `SELECT activity_type, COUNT(*) as count, SUM(duration_minutes) as minutes
-       FROM daily_tracker_logs
-       WHERE user_id = ?
-       GROUP BY activity_type`,
-      [userId]
-    );
-
-    // 6. Last 14 days grid
+    // Last 14 days grid
     const recentDays = [];
     for (let i = 13; i >= 0; i--) {
       const d = new Date();
@@ -133,14 +72,94 @@ export async function getTrackerSummary(req, res) {
       });
     }
 
-    // Fetch dates that had logs in the last 14 days
-    const recentActivityDates = await query(
-      `SELECT date, COUNT(*) as logs_count, SUM(duration_minutes) as minutes
-       FROM daily_tracker_logs
-       WHERE user_id = ? AND date >= ?
-       GROUP BY date`,
-      [userId, recentDays[0].date]
-    );
+    // Last 7 days breakdown for Recharts Weekly Progress Chart
+    const past7Days = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dStr = d.toISOString().split('T')[0];
+      const dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
+      past7Days.push({ date: dStr, dayName });
+    }
+
+    // Fetch all independent tracker datasets concurrently
+    const [
+      todayLogs,
+      partnership,
+      streak,
+      past30Stats,
+      activityCounts,
+      recentActivityDates,
+      past7Activity,
+    ] = await Promise.all([
+      query(
+        `SELECT id, activity_type, portion_covered, pages_count, ayahs_count, duration_minutes, notes, created_at
+         FROM daily_tracker_logs
+         WHERE user_id = ? AND date = ?
+         ORDER BY id DESC`,
+        [userId, todayStr]
+      ),
+      get(
+        `SELECT id, user_a_id, user_b_id, status FROM partnerships
+         WHERE (user_a_id = ? OR user_b_id = ?) AND status = 'active'`,
+        [userId, userId]
+      ),
+      calculateUserStreak(userId),
+      get(
+        `SELECT 
+           COUNT(DISTINCT date) as days_studied,
+           SUM(duration_minutes) as total_minutes,
+           SUM(pages_count) as total_pages,
+           SUM(ayahs_count) as total_ayahs
+         FROM daily_tracker_logs
+         WHERE user_id = ? AND date >= ?`,
+        [userId, past30Str]
+      ),
+      query(
+        `SELECT activity_type, COUNT(*) as count, SUM(duration_minutes) as minutes
+         FROM daily_tracker_logs
+         WHERE user_id = ?
+         GROUP BY activity_type`,
+        [userId]
+      ),
+      query(
+        `SELECT date, COUNT(*) as logs_count, SUM(duration_minutes) as minutes
+         FROM daily_tracker_logs
+         WHERE user_id = ? AND date >= ?
+         GROUP BY date`,
+        [userId, recentDays[0].date]
+      ),
+      query(
+        `SELECT date, activity_type, SUM(ayahs_count) as ayahs, SUM(duration_minutes) as minutes
+         FROM daily_tracker_logs
+         WHERE user_id = ? AND date >= ?
+         GROUP BY date, activity_type`,
+        [userId, past7Days[0].date]
+      ),
+    ]);
+
+    let partnerInfo = null;
+    if (partnership) {
+      const partnerId = partnership.user_a_id === userId ? partnership.user_b_id : partnership.user_a_id;
+      const [partnerUser, partnerTodayCheckin] = await Promise.all([
+        get(
+          `SELECT id, name, memorization_stage, goal, avatar_color FROM users WHERE id = ?`,
+          [partnerId]
+        ),
+        get(
+          `SELECT id, completed, notes FROM checkins
+           WHERE partnership_id = ? AND user_id = ? AND date = ?`,
+          [partnership.id, partnerId, todayStr]
+        ),
+      ]);
+
+      partnerInfo = {
+        partnershipId: partnership.id,
+        partner: partnerUser,
+        partnerCompletedToday: partnerTodayCheckin ? partnerTodayCheckin.completed === 1 : false,
+        partnerNotes: partnerTodayCheckin?.notes || '',
+      };
+    }
 
     const activeDateMap = {};
     for (const r of recentActivityDates) {
@@ -153,24 +172,6 @@ export async function getTrackerSummary(req, res) {
       minutes: activeDateMap[d.date]?.minutes || 0,
       logsCount: activeDateMap[d.date]?.count || 0,
     }));
-
-    // 7. Last 7 days breakdown for Recharts Weekly Progress Chart (Verses Memorized vs Reviewed)
-    const past7Days = [];
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const dStr = d.toISOString().split('T')[0];
-      const dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
-      past7Days.push({ date: dStr, dayName });
-    }
-
-    const past7Activity = await query(
-      `SELECT date, activity_type, SUM(ayahs_count) as ayahs, SUM(duration_minutes) as minutes
-       FROM daily_tracker_logs
-       WHERE user_id = ? AND date >= ?
-       GROUP BY date, activity_type`,
-      [userId, past7Days[0].date]
-    );
 
     const past7Map = {};
     for (const row of past7Activity) {

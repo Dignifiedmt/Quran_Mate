@@ -92,6 +92,7 @@ export async function getDb() {
     // Performance indexes on hot query paths
     try {
       dbInstance.exec(`
+        CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
         CREATE INDEX IF NOT EXISTS idx_availability_user ON availability(user_id);
         CREATE INDEX IF NOT EXISTS idx_partnerships_users ON partnerships(user_a_id, user_b_id, status);
         CREATE INDEX IF NOT EXISTS idx_requests_sender_receiver ON partner_requests(sender_id, receiver_id, status);
@@ -101,6 +102,7 @@ export async function getDb() {
         CREATE INDEX IF NOT EXISTS idx_sessions_users ON study_sessions(creator_id, partner_id, session_date);
         CREATE INDEX IF NOT EXISTS idx_group_members_lookup ON group_members(group_id, user_id);
         CREATE INDEX IF NOT EXISTS idx_group_messages_group ON group_messages(group_id, id);
+        CREATE INDEX IF NOT EXISTS idx_group_khatmah_lookup ON group_khatmah(group_id, status);
         CREATE INDEX IF NOT EXISTS idx_bookmarks_user ON verse_bookmarks(user_id);
       `);
     } catch (e) {
@@ -112,7 +114,13 @@ export async function getDb() {
   return dbInstance;
 }
 
+let persistTimer = null;
+
 export function persist() {
+  if (persistTimer) {
+    clearTimeout(persistTimer);
+    persistTimer = null;
+  }
   if (!dbInstance) return;
   try {
     const data = dbInstance.export();
@@ -128,6 +136,26 @@ export function persist() {
       console.error('Fallback persistence failed:', fallbackErr);
     }
   }
+}
+
+function schedulePersist() {
+  if (persistTimer) return;
+  persistTimer = setTimeout(() => {
+    persistTimer = null;
+    persist();
+  }, 100);
+  if (typeof persistTimer.unref === 'function') {
+    persistTimer.unref();
+  }
+}
+
+// Flush pending writes cleanly on process exit
+for (const sig of ['SIGINT', 'SIGTERM', 'beforeExit']) {
+  process.on(sig, () => {
+    if (persistTimer) {
+      persist();
+    }
+  });
 }
 
 // Database helper functions
@@ -153,7 +181,7 @@ export async function run(sql, params = []) {
   db.run(sql, params);
   // Get last inserted id and changes
   const lastIdRes = db.exec("SELECT last_insert_rowid() as id, changes() as changes;");
-  persist();
+  schedulePersist();
   if (lastIdRes.length > 0 && lastIdRes[0].values.length > 0) {
     const [id, changes] = lastIdRes[0].values[0];
     return { lastInsertRowid: id, changes };
@@ -164,5 +192,5 @@ export async function run(sql, params = []) {
 export async function exec(sql) {
   const db = await getDb();
   db.exec(sql);
-  persist();
+  schedulePersist();
 }

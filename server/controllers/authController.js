@@ -121,19 +121,19 @@ export async function getMe(req, res) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    const availability = await query(
-      'SELECT id, day, start_time, end_time FROM availability WHERE user_id = ? ORDER BY id ASC',
-      [user.id]
-    );
-
-    // Check if user is currently partnered
-    const partnership = await get(
-      `SELECT p.id, p.status, p.created_at,
-              CASE WHEN p.user_a_id = ? THEN p.user_b_id ELSE p.user_a_id END as partner_id
-       FROM partnerships p
-       WHERE (p.user_a_id = ? OR p.user_b_id = ?) AND p.status = 'active'`,
-      [user.id, user.id, user.id]
-    );
+    const [availability, partnership] = await Promise.all([
+      query(
+        'SELECT id, day, start_time, end_time FROM availability WHERE user_id = ? ORDER BY id ASC',
+        [user.id]
+      ),
+      get(
+        `SELECT p.id, p.status, p.created_at,
+                CASE WHEN p.user_a_id = ? THEN p.user_b_id ELSE p.user_a_id END as partner_id
+         FROM partnerships p
+         WHERE (p.user_a_id = ? OR p.user_b_id = ?) AND p.status = 'active'`,
+        [user.id, user.id, user.id]
+      ),
+    ]);
 
     return res.json({
       user,

@@ -174,22 +174,10 @@ export const api = {
     return cachedGet(`/groups?${query.toString()}`);
   },
   getGroupById: (id) => request(`/groups/${id}`),
-  createGroup: async (payload) => {
-    const res = await request('/groups', { method: 'POST', body: JSON.stringify(payload) });
-    if (res?.token) {
-      setAuthToken(res.token);
-      window.dispatchEvent(new CustomEvent('auth:updated', { detail: res.user }));
-    }
-    return res;
-  },
-  joinGroup: async (id, payload = {}) => {
-    const res = await request(`/groups/${id}/join`, { method: 'POST', body: JSON.stringify(payload) });
-    if (res?.token) {
-      setAuthToken(res.token);
-      window.dispatchEvent(new CustomEvent('auth:updated', { detail: res.user }));
-    }
-    return res;
-  },
+  createGroup: (payload) =>
+    request('/groups', { method: 'POST', body: JSON.stringify(payload) }),
+  joinGroup: (id, payload = {}) =>
+    request(`/groups/${id}/join`, { method: 'POST', body: JSON.stringify(payload) }),
   leaveGroup: (id) => request(`/groups/${id}/leave`, { method: 'POST' }),
   postGroupMessage: (id, payload) =>
     request(`/groups/${id}/messages`, { method: 'POST', body: JSON.stringify(payload) }),

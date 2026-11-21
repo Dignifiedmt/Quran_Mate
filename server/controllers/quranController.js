@@ -306,6 +306,7 @@ export async function getSurahByNumber(req, res) {
 
       // Cache it
       SURAH_CACHE[surahNumber] = formattedSurah;
+      res.set('Cache-Control', 'public, max-age=86400');
 
       return res.json({ surah: formattedSurah });
     }

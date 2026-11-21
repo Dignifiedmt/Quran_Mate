@@ -1,10 +1,12 @@
 // Qur'an Study Circles & Collaborative Halaqahs Controller
-import jwt from 'jsonwebtoken';
 import { query, get, run, exec } from '../database/database.js';
-import { JWT_SECRET } from '../middleware/auth.js';
 
-// Ensure tables exist on invocation
+let tablesEnsured = false;
+let groupsSeeded = false;
+
+// Ensure tables exist once per server lifecycle
 async function ensureTables() {
+  if (tablesEnsured) return;
   await exec(`
     CREATE TABLE IF NOT EXISTS study_groups (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -57,13 +59,18 @@ async function ensureTables() {
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
     );
   `);
+  tablesEnsured = true;
 }
 
-// Seed initial study groups if empty
+// Seed initial study groups if empty (runs once per server startup)
 async function seedDefaultGroupsIfEmpty() {
+  if (groupsSeeded) return;
   await ensureTables();
   const existing = await query('SELECT count(*) as count FROM study_groups');
-  if (existing[0] && existing[0].count > 0) return;
+  if (existing[0] && existing[0].count > 0) {
+    groupsSeeded = true;
+    return;
+  }
 
   const firstUser = await get('SELECT id FROM users ORDER BY id ASC LIMIT 1');
   const creatorId = firstUser ? firstUser.id : 1;
@@ -184,6 +191,7 @@ async function seedDefaultGroupsIfEmpty() {
       );
     }
   }
+  groupsSeeded = true;
 }
 
 // 1. GET /api/groups - List all available study circles & rooms
@@ -261,59 +269,57 @@ export async function getGroupById(req, res) {
       return res.status(404).json({ error: 'Study circle room not found' });
     }
 
-    // Fetch members
-    const members = await query(
-      `SELECT 
-        gm.role,
-        gm.joined_at,
-        u.id as user_id,
-        u.name,
-        u.email,
-        u.avatar_color,
-        u.memorization_stage,
-        u.goal
-      FROM group_members gm
-      JOIN users u ON gm.user_id = u.id
-      WHERE gm.group_id = ?
-      ORDER BY gm.role DESC, gm.joined_at ASC`,
-      [groupId]
-    );
-
-    // Fetch 30 Juz Khatmah board
-    const khatmahRows = await query(
-      `SELECT 
-        k.juz_number,
-        k.status,
-        k.notes,
-        k.completed_at,
-        u.id as user_id,
-        u.name as user_name,
-        u.avatar_color as user_avatar
-      FROM group_khatmah k
-      LEFT JOIN users u ON k.user_id = u.id
-      WHERE k.group_id = ?
-      ORDER BY k.juz_number ASC`,
-      [groupId]
-    );
-
-    // Fetch group discussion messages
-    const messages = await query(
-      `SELECT 
-        m.id,
-        m.text,
-        m.ayah_ref,
-        m.created_at,
-        u.id as user_id,
-        u.name as user_name,
-        u.avatar_color as user_avatar,
-        u.memorization_stage as user_stage
-      FROM group_messages m
-      JOIN users u ON m.user_id = u.id
-      WHERE m.group_id = ?
-      ORDER BY m.created_at ASC
-      LIMIT 80`,
-      [groupId]
-    );
+    // Fetch members, 30-Juz Khatmah board, and messages concurrently
+    const [members, khatmahRows, messages] = await Promise.all([
+      query(
+        `SELECT 
+          gm.role,
+          gm.joined_at,
+          u.id as user_id,
+          u.name,
+          u.email,
+          u.avatar_color,
+          u.memorization_stage,
+          u.goal
+        FROM group_members gm
+        JOIN users u ON gm.user_id = u.id
+        WHERE gm.group_id = ?
+        ORDER BY gm.role DESC, gm.joined_at ASC`,
+        [groupId]
+      ),
+      query(
+        `SELECT 
+          k.juz_number,
+          k.status,
+          k.notes,
+          k.completed_at,
+          u.id as user_id,
+          u.name as user_name,
+          u.avatar_color as user_avatar
+        FROM group_khatmah k
+        LEFT JOIN users u ON k.user_id = u.id
+        WHERE k.group_id = ?
+        ORDER BY k.juz_number ASC`,
+        [groupId]
+      ),
+      query(
+        `SELECT 
+          m.id,
+          m.text,
+          m.ayah_ref,
+          m.created_at,
+          u.id as user_id,
+          u.name as user_name,
+          u.avatar_color as user_avatar,
+          u.memorization_stage as user_stage
+        FROM group_messages m
+        JOIN users u ON m.user_id = u.id
+        WHERE m.group_id = ?
+        ORDER BY m.created_at ASC
+        LIMIT 80`,
+        [groupId]
+      )
+    ]);
 
     const completedCount = khatmahRows.filter((k) => k.status === 'completed').length;
     const claimedCount = khatmahRows.filter((k) => k.status === 'claimed').length;
@@ -335,13 +341,14 @@ export async function getGroupById(req, res) {
   }
 }
 
-// 3. POST /api/groups - Create a new study circle / collaborative room (available to everyone)
+// 3. POST /api/groups - Create a new study circle / collaborative room (requires sign-in)
 export async function createGroup(req, res) {
   try {
     await ensureTables();
-    let userId = req.user ? req.user.id : null;
-    let token = null;
-    let authUser = null;
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Please sign in to join the study circle.' });
+    }
 
     const {
       name,
@@ -352,43 +359,17 @@ export async function createGroup(req, res) {
       meeting_link = '',
       meeting_platform = 'google_meet',
       max_members = 30,
-      avatar_theme = 'emerald',
-      guest_name = ''
+      avatar_theme = 'emerald'
     } = req.body;
 
     if (!name || !name.trim()) {
       return res.status(400).json({ error: 'Please provide a name for your study circle' });
     }
 
-    // If caller is not authenticated, provision a seamless guest host account so creation is open to everyone
-    if (!userId) {
-      const cleanGuestName = (guest_name?.trim() || 'Sister Halaqah Host').slice(0, 40);
-      const guestEmail = `host_${Date.now()}_${Math.floor(Math.random() * 10000)}@quranmate.local`;
-      const colors = ['#047857', '#0f766e', '#854d0e', '#1e3a8a', '#4338ca', '#065f46', '#15803d'];
-      const chosenColor = colors[Math.floor(Math.random() * colors.length)];
-
-      const guestResult = await run(
-        `INSERT INTO users (name, email, password_hash, bio, memorization_stage, goal, avatar_color)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [cleanGuestName, guestEmail, 'guest_account_secured', 'Circle Founder & Host', 'Juz 30', 'Halaqah study & recitation', chosenColor]
-      );
-      userId = guestResult.lastInsertRowid;
-      authUser = {
-        id: userId,
-        name: cleanGuestName,
-        email: guestEmail,
-        bio: 'Circle Founder & Host',
-        memorization_stage: 'Juz 30',
-        goal: 'Halaqah study & recitation',
-        avatar_color: chosenColor
-      };
-      token = jwt.sign({ id: userId, email: guestEmail }, JWT_SECRET, { expiresIn: '30d' });
-    }
-
     const cleanName = name.trim();
     const safeRoomSlug = cleanName.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 30);
-    
-    // Choose appropriate meeting link (Google Meet or high quality video room)
+
+    // Choose appropriate meeting link (Google Meet or Jitsi room)
     let generatedMeetingLink = meeting_link?.trim();
     if (!generatedMeetingLink) {
       if (meeting_platform === 'google_meet') {
@@ -423,14 +404,16 @@ export async function createGroup(req, res) {
       [groupId, userId]
     );
 
-    // Initialize 30 Juz slots for group Khatmah
+    // Initialize all 30 Juz slots in a single multi-row insert
+    const juzPlaceholders = Array.from({ length: 30 }, () => '(?, ?, \'available\')').join(', ');
+    const juzParams = [];
     for (let j = 1; j <= 30; j++) {
-      await run(
-        `INSERT INTO group_khatmah (group_id, juz_number, status)
-         VALUES (?, ?, 'available')`,
-        [groupId, j]
-      );
+      juzParams.push(groupId, j);
     }
+    await run(
+      `INSERT INTO group_khatmah (group_id, juz_number, status) VALUES ${juzPlaceholders}`,
+      juzParams
+    );
 
     // Add welcome initial message
     await run(
@@ -446,9 +429,7 @@ export async function createGroup(req, res) {
 
     res.status(201).json({
       id: groupId,
-      message: 'Study circle room created successfully',
-      token,
-      user: authUser
+      message: 'Study circle room created successfully'
     });
   } catch (err) {
     console.error('Error creating study group:', err);
@@ -456,37 +437,13 @@ export async function createGroup(req, res) {
   }
 }
 
-// 4. POST /api/groups/:id/join - Join a study circle room (open to everyone)
+// 4. POST /api/groups/:id/join - Join a study circle room (requires sign-in)
 export async function joinGroup(req, res) {
   try {
     const groupId = parseInt(req.params.id, 10);
-    let userId = req.user ? req.user.id : null;
-    let token = null;
-    let authUser = null;
-
-    // If unauthenticated guest joins, automatically provision guest learner credentials
+    const userId = req.user?.id;
     if (!userId) {
-      const cleanGuestName = (req.body.guest_name?.trim() || 'Sister Reciter').slice(0, 40);
-      const guestEmail = `guest_${Date.now()}_${Math.floor(Math.random() * 10000)}@quranmate.local`;
-      const colors = ['#047857', '#0f766e', '#854d0e', '#1e3a8a', '#4338ca', '#065f46', '#15803d'];
-      const chosenColor = colors[Math.floor(Math.random() * colors.length)];
-
-      const guestResult = await run(
-        `INSERT INTO users (name, email, password_hash, bio, memorization_stage, goal, avatar_color)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [cleanGuestName, guestEmail, 'guest_account_secured', 'Halaqah Member', 'Juz 30', 'Learn & memorize Quran', chosenColor]
-      );
-      userId = guestResult.lastInsertRowid;
-      authUser = {
-        id: userId,
-        name: cleanGuestName,
-        email: guestEmail,
-        bio: 'Halaqah Member',
-        memorization_stage: 'Juz 30',
-        goal: 'Learn & memorize Quran',
-        avatar_color: chosenColor
-      };
-      token = jwt.sign({ id: userId, email: guestEmail }, JWT_SECRET, { expiresIn: '30d' });
+      return res.status(401).json({ error: 'Please sign in to join the study circle.' });
     }
 
     const group = await get('SELECT id, max_members, name FROM study_groups WHERE id = ?', [groupId]);
@@ -521,9 +478,7 @@ export async function joinGroup(req, res) {
 
     res.json({
       success: true,
-      message: `Successfully joined ${group.name}`,
-      token,
-      user: authUser
+      message: `Successfully joined ${group.name}`
     });
   } catch (err) {
     console.error('Error joining group:', err);

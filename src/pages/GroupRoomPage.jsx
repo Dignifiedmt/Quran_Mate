@@ -21,7 +21,9 @@ import {
   Volume2,
   ExternalLink,
   ShieldCheck,
-  Award
+  Award,
+  LogIn,
+  UserPlus
 } from 'lucide-react';
 import { api } from '../services/api.js';
 import { useAuth } from '../context/AuthContext.jsx';
@@ -49,6 +51,7 @@ export default function GroupRoomPage() {
   const [meetingProvider, setMeetingProvider] = useState('in_app'); // 'in_app' | 'google_meet'
   const [copiedLink, setCopiedLink] = useState(false);
   const [khatmahActionLoading, setKhatmahActionLoading] = useState(null);
+  const [showSignInPrompt, setShowSignInPrompt] = useState(false);
 
   useEffect(() => {
     loadGroupDetails();
@@ -92,11 +95,18 @@ export default function GroupRoomPage() {
   }
 
   async function handleJoinCircle() {
+    if (!user) {
+      setShowSignInPrompt(true);
+      return;
+    }
     try {
       await api.joinGroup(id);
       await loadGroupDetails(false);
     } catch (err) {
       console.error('Failed to join:', err);
+      if (err.status === 401) {
+        setShowSignInPrompt(true);
+      }
     }
   }
 
@@ -114,6 +124,10 @@ export default function GroupRoomPage() {
 
   async function handleSendMessage(e) {
     e.preventDefault();
+    if (!user) {
+      setShowSignInPrompt(true);
+      return;
+    }
     if (!messageText.trim()) return;
 
     try {
@@ -136,6 +150,10 @@ export default function GroupRoomPage() {
   }
 
   async function handleKhatmahAction(juzNumber, action) {
+    if (!user) {
+      setShowSignInPrompt(true);
+      return;
+    }
     try {
       if (!group?.is_member) {
         await api.joinGroup(id);
@@ -221,7 +239,7 @@ export default function GroupRoomPage() {
           {isMember ? (
             <button
               onClick={handleLeaveCircle}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-rose-200 dark:border-rose-900/50 bg-rose-50/50 dark:bg-rose-950/20 text-rose-700 dark:text-rose-300 text-xs font-semibold hover:bg-rose-100 transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-rose-200 dark:border-rose-900/50 bg-rose-50/50 dark:bg-rose-950/20 text-rose-700 dark:text-rose-300 text-xs font-semibold hover:bg-rose-100 transition-colors cursor-pointer"
             >
               <LogOut className="w-3.5 h-3.5" />
               <span>Leave</span>
@@ -229,14 +247,49 @@ export default function GroupRoomPage() {
           ) : (
             <button
               onClick={handleJoinCircle}
-              className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-[var(--primary)] text-white text-xs font-bold hover:bg-[var(--primary-dark)] transition-colors shadow-2xs"
+              className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-[var(--primary)] text-white text-xs font-bold hover:bg-[var(--primary-hover)] transition-colors shadow-2xs cursor-pointer"
             >
-              <Users className="w-3.5 h-3.5" />
-              <span>Join Circle</span>
+              {user ? <Users className="w-3.5 h-3.5" /> : <LogIn className="w-3.5 h-3.5" />}
+              <span>{user ? 'Join Circle' : 'Sign in to Join'}</span>
             </button>
           )}
         </div>
       </div>
+
+      {/* Sign In to Join Notice Banner */}
+      {(!user || showSignInPrompt) && !isMember && (
+        <div className="rounded-2xl border border-amber-300/80 dark:border-amber-800/70 bg-amber-50/90 dark:bg-amber-950/30 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+          <div className="flex items-start gap-3">
+            <div className="w-9 h-9 rounded-xl bg-amber-500/15 text-amber-700 dark:text-amber-300 flex items-center justify-center shrink-0">
+              <LogIn className="w-4 h-4" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-amber-950 dark:text-amber-100">
+                Sign in to join the study circle
+              </h3>
+              <p className="text-xs text-amber-900/80 dark:text-amber-200/80 mt-0.5">
+                Please sign in or create an account to join this circle, claim a Juz for the Khatmah, or post reflections.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Link
+              to="/login"
+              className="px-4 py-2 rounded-xl bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white text-xs font-bold flex items-center gap-1.5 transition-colors whitespace-nowrap"
+            >
+              <LogIn className="w-3.5 h-3.5" />
+              <span>Sign In</span>
+            </Link>
+            <Link
+              to="/register"
+              className="px-3.5 py-2 rounded-xl border border-amber-300 dark:border-amber-700 bg-[var(--bg-surface)] text-[var(--text-primary)] hover:bg-[var(--bg-subtle)] text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap"
+            >
+              <UserPlus className="w-3.5 h-3.5" />
+              <span>Sign Up</span>
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* Top Islamic Bismillah with Progressive Writing */}
       <BismillahHeader showTranslation={false} className="py-0 mb-1" />
@@ -605,9 +658,9 @@ export default function GroupRoomPage() {
                     {!isMember ? (
                       <button
                         onClick={handleJoinCircle}
-                        className="w-full py-1 rounded-lg text-[10px] font-semibold text-[var(--primary)] bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 transition-colors"
+                        className="w-full py-1 rounded-lg text-[10px] font-semibold text-[var(--primary)] bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 transition-colors cursor-pointer"
                       >
-                        Join to Claim
+                        {user ? 'Join to Claim' : 'Sign in to Claim'}
                       </button>
                     ) : isCompleted ? (
                       <div className="text-center text-[10px] font-bold text-emerald-700 dark:text-emerald-400 py-1">
@@ -736,7 +789,17 @@ export default function GroupRoomPage() {
 
             {/* Message Input Box */}
             <form onSubmit={handleSendMessage} className="pt-3 mt-3 border-t border-[var(--border-color)] space-y-2">
-              {!isMember ? (
+              {!user ? (
+                <div className="p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 text-xs text-amber-900 dark:text-amber-200 flex flex-col sm:flex-row items-center justify-between gap-2 font-medium">
+                  <span>Sign in to join the study circle and contribute reflections.</span>
+                  <Link
+                    to="/login"
+                    className="px-3 py-1.5 rounded-lg bg-[var(--primary)] text-white text-xs font-bold hover:bg-[var(--primary-hover)] transition-colors whitespace-nowrap"
+                  >
+                    Sign In
+                  </Link>
+                </div>
+              ) : !isMember ? (
                 <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 text-xs text-amber-800 dark:text-amber-300 text-center font-medium">
                   Please join this circle above to contribute reflections and chat.
                 </div>
