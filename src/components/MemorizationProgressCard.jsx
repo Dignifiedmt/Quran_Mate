@@ -175,7 +175,7 @@ function MemorizationProgressCard({
             <TrendingUp className="w-4 h-4 text-emerald-600" />
             <span>Portion Committed to Memory:</span>
           </span>
-          <span className="text-emerald-700 dark:text-emerald-400 font-bold">
+          <span className="text-emerald-700 dark:text-emerald-400 font-bold tabular-nums">
             {percentage}% of Holy Qur&rsquo;an
           </span>
         </div>
@@ -195,10 +195,10 @@ function MemorizationProgressCard({
           <div className="text-[10px] font-bold text-emerald-800 dark:text-emerald-300 uppercase tracking-wider">
             Ayahs Memorized
           </div>
-          <div className="text-lg sm:text-xl font-black text-emerald-950 dark:text-emerald-100 mt-0.5">
+          <div className="text-lg sm:text-xl font-black text-emerald-950 dark:text-emerald-100 mt-0.5 tabular-nums">
             {ayahsInRange.toLocaleString()}
           </div>
-          <div className="text-[10px] text-[var(--text-muted)]">
+          <div className="text-[10px] text-[var(--text-muted)] tabular-nums">
             of {TOTAL_AYAHS.toLocaleString()} total
           </div>
         </div>
@@ -207,10 +207,10 @@ function MemorizationProgressCard({
           <div className="text-[10px] font-bold text-teal-800 dark:text-teal-300 uppercase tracking-wider">
             Surahs Covered
           </div>
-          <div className="text-lg sm:text-xl font-black text-teal-950 dark:text-teal-100 mt-0.5">
+          <div className="text-lg sm:text-xl font-black text-teal-950 dark:text-teal-100 mt-0.5 tabular-nums">
             {surahsInRange.length}
           </div>
-          <div className="text-[10px] text-[var(--text-muted)]">
+          <div className="text-[10px] text-[var(--text-muted)] tabular-nums">
             Surah {fromNum} &rarr; {toNum}
           </div>
         </div>

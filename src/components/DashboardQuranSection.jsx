@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import BismillahHeader from './BismillahHeader.jsx';
 import { SURAHS_LIST } from '../data/surahsList.js';
+import { QURRA_LIST, getSurahAudioUrl } from '../data/quranReciters.js';
 import { api } from '../services/api.js';
 
 function DashboardQuranSection({ defaultSurahNumber = 1 }) {
@@ -22,20 +23,14 @@ function DashboardQuranSection({ defaultSurahNumber = 1 }) {
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isPlaying, setIsPlaying] = useState(false);
-  const [selectedReciter, setSelectedReciter] = useState('ar.alafasy');
-  const [audioUrl, setAudioUrl] = useState(() => {
-    const formattedNum = String(defaultSurahNumber).padStart(3, '0');
-    return `https://server8.mp3quran.net/afs/${formattedNum}.mp3`;
-  });
+  const [selectedReciter, setSelectedReciter] = useState(QURRA_LIST[0].id);
+  const [audioError, setAudioError] = useState(false);
   const audioRef = useRef(null);
 
-  // Reciters
-  const RECITERS = [
-    { id: 'ar.alafasy', name: 'Mishary Rashid Alafasy' },
-    { id: 'ar.abdulbasitmurattal', name: 'AbdulBaset Murattal' },
-    { id: 'ar.saoodshuraym', name: 'Saood Ash-Shuraym' },
-    { id: 'ar.sudais', name: 'Abdur-Rahman As-Sudais' },
-  ];
+  const audioUrl = useMemo(
+    () => getSurahAudioUrl(selectedReciter, selectedSurahNumber),
+    [selectedReciter, selectedSurahNumber]
+  );
 
   // Fetch Surah Ayahs from API or fallback
   useEffect(() => {
@@ -59,24 +54,16 @@ function DashboardQuranSection({ defaultSurahNumber = 1 }) {
     };
   }, [selectedSurahNumber]);
 
-  // Audio stream URL for complete Surah
+  // Reset audio playback state when surah or reciter changes
   useEffect(() => {
-    const formattedNum = String(selectedSurahNumber).padStart(3, '0');
-    const reciterBaseMap = {
-      'ar.alafasy': 'https://server8.mp3quran.net/afs',
-      'ar.abdulbasitmurattal': 'https://server7.mp3quran.net/basit',
-      'ar.saoodshuraym': 'https://server7.mp3quran.net/shur',
-      'ar.sudais': 'https://server11.mp3quran.net/sds',
-    };
-    const baseUrl = reciterBaseMap[selectedReciter] || reciterBaseMap['ar.alafasy'];
-
-    setAudioUrl(`${baseUrl}/${formattedNum}.mp3`);
     setIsPlaying(false);
+    setAudioError(false);
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
+      audioRef.current.load();
     }
-  }, [selectedSurahNumber, selectedReciter]);
+  }, [audioUrl]);
 
   const toggleAudio = () => {
     if (!audioRef.current) return;
@@ -145,12 +132,9 @@ function DashboardQuranSection({ defaultSurahNumber = 1 }) {
           </div>
         </div>
 
-        {/* The Radiant Bismillah Display */}
-        <div className="mt-4 pt-4 border-t border-[var(--border-color)]">
-          <BismillahHeader
-            showTranslation={true}
-            className="py-1"
-          />
+        {/* Sacred Bismillah Plaque matching Home */}
+        <div className="mt-5 max-w-2xl mx-auto rounded-2xl bg-[#fbfbf9]/95 dark:bg-[#0f1412]/90 border border-amber-200/70 dark:border-emerald-800/60 px-5 py-3 shadow-sm">
+          <BismillahHeader showTranslation={true} className="my-0" />
         </div>
       </div>
 
@@ -237,7 +221,13 @@ function DashboardQuranSection({ defaultSurahNumber = 1 }) {
                 </div>
                 <div className="text-[11px] text-emerald-700 dark:text-emerald-300 flex items-center gap-1">
                   <Volume2 className="w-3 h-3" />
-                  <span>{isPlaying ? 'Now Playing' : 'Ready to Recite'}</span>
+                  <span>
+                    {audioError
+                      ? 'Audio stream unavailable — try another Qari'
+                      : isPlaying
+                        ? 'Now Playing'
+                        : 'Ready to Recite'}
+                  </span>
                 </div>
               </div>
             </div>
@@ -247,9 +237,10 @@ function DashboardQuranSection({ defaultSurahNumber = 1 }) {
               <select
                 value={selectedReciter}
                 onChange={(e) => setSelectedReciter(e.target.value)}
+                aria-label="Select Qur'an Reciter"
                 className="text-xs rounded-xl border border-[var(--border-color)] bg-[var(--bg-primary)] px-2.5 py-1.5 text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--primary)] font-medium"
               >
-                {RECITERS.map((r) => (
+                {QURRA_LIST.map((r) => (
                   <option key={r.id} value={r.id}>
                     {r.name}
                   </option>
@@ -281,10 +272,15 @@ function DashboardQuranSection({ defaultSurahNumber = 1 }) {
 
             {audioUrl ? (
               <audio
+                key={audioUrl}
                 ref={audioRef}
-                src={audioUrl || null}
+                src={audioUrl}
+                preload="none"
                 onEnded={() => setIsPlaying(false)}
-                onError={() => setIsPlaying(false)}
+                onError={() => {
+                  setIsPlaying(false);
+                  setAudioError(true);
+                }}
               />
             ) : null}
           </div>

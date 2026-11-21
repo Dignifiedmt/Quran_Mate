@@ -7,7 +7,6 @@ import {
   BookOpen,
   Users,
   Search,
-  Sparkles,
   ArrowRight,
   Clock,
   Video,
@@ -97,8 +96,8 @@ export default function DashboardPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-in fade-in duration-300">
-      {/* Top Welcome Header with Holy Qur'an Background */}
-      <div className="relative rounded-3xl border border-emerald-900/40 bg-gradient-to-br from-emerald-950 via-[#152212] to-stone-950 p-6 sm:p-8 shadow-lg overflow-hidden">
+      {/* Top Welcome Header with Holy Qur'an Background & Home-Matched Bismillah Plaque */}
+      <section className="relative rounded-3xl border border-emerald-900/40 bg-gradient-to-br from-emerald-950 via-[#152212] to-stone-950 px-5 py-7 sm:px-8 sm:py-9 shadow-xl overflow-hidden">
         {/* Background Qur'an Photograph */}
         <img
           src={heroQuranBackdrop}
@@ -110,69 +109,77 @@ export default function DashboardPage() {
           decoding="async"
         />
 
-        {/* Measured Contrast Scrim */}
+        {/* Measured Contrast Scrim (Matched to Home Hero) */}
         <div
-          className="absolute inset-0 bg-gradient-to-r from-black/82 via-emerald-950/75 to-black/70 pointer-events-none"
+          className="absolute inset-0 bg-gradient-to-b from-black/75 via-emerald-950/68 to-black/82 pointer-events-none"
           aria-hidden="true"
         />
 
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          <div className="flex items-start gap-4">
-            <BrandLogo size="lg" className="shrink-0 hidden sm:flex mt-1 rounded-2xl shadow-lg ring-1 ring-amber-300/30" />
-            <div className="space-y-2.5">
-              <div className="inline-block rounded-2xl bg-[#fbfbf9]/92 dark:bg-[#0f1412]/88 backdrop-blur-md border border-amber-200/60 dark:border-emerald-800/60 px-4 py-1.5 shadow-sm">
-                <BismillahHeader showTranslation={false} className="my-0" />
+        <div className="relative z-10 space-y-6">
+          {/* Centered Sacred Bismillah Plaque — Exact Match to Home */}
+          <div className="max-w-2xl mx-auto rounded-2xl bg-[#fbfbf9]/92 dark:bg-[#0f1412]/88 backdrop-blur-md border border-amber-200/60 dark:border-emerald-800/60 px-5 py-3 shadow-lg">
+            <BismillahHeader showTranslation={true} className="my-0" />
+          </div>
+
+          {/* Greeting & Quick Actions Split Row */}
+          <div className="pt-5 border-t border-white/15 flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+            <div className="flex items-start gap-4">
+              <BrandLogo
+                size="lg"
+                className="shrink-0 hidden sm:flex mt-0.5 rounded-2xl shadow-lg ring-1 ring-amber-300/30"
+              />
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2 text-xs font-semibold text-amber-200/95 tracking-wide">
+                  <BookOpen className="w-3.5 h-3.5 text-amber-300 shrink-0" />
+                  <span>Learner Command Center &bull; {todayDateFormatted}</span>
+                </div>
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight leading-tight text-balance drop-shadow-xs">
+                  Assalamu Alaikum, {user?.name ? user.name.split(' ')[0] : 'Sister'}!
+                </h1>
+                <p className="text-xs sm:text-sm text-stone-100/90 max-w-xl leading-relaxed">
+                  May Allah bless your recitation, expand your heart with the Qur&rsquo;an, and grant you steadfast consistency in your Hifz journey today.
+                </p>
               </div>
-              <div className="flex items-center gap-2 text-xs font-semibold text-amber-200">
-                <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                <span>Learner Command Center &bull; {todayDateFormatted}</span>
-              </div>
-              <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight drop-shadow-xs">
-                Assalamu Alaikum, {user?.name ? user.name.split(' ')[0] : 'Sister'}!
-              </h1>
-              <p className="text-sm text-stone-100/90 max-w-xl">
-                May Allah bless your recitation, expand your heart with the Qur&rsquo;an, and grant you steadfast consistency in your Hifz journey today.
-              </p>
+            </div>
+
+            {/* Quick Action Buttons */}
+            <div className="grid grid-cols-2 sm:flex sm:flex-wrap lg:justify-end items-center gap-2.5 shrink-0">
+              <button
+                type="button"
+                onClick={() => setActiveDashboardTab('quran')}
+                className="flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-500 shadow-md transition-colors cursor-pointer whitespace-nowrap"
+              >
+                <BookOpen className="w-4 h-4 shrink-0" />
+                <span>Qur&rsquo;an Reader</span>
+              </button>
+
+              <Link
+                to="/tracker"
+                className="flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-bold bg-amber-500 text-stone-950 hover:bg-amber-400 shadow-md transition-colors whitespace-nowrap"
+              >
+                <PlusCircle className="w-4 h-4 shrink-0" />
+                <span>Log Recitation</span>
+              </Link>
+
+              <Link
+                to="/ayah-finder"
+                className="flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-semibold border border-white/25 bg-black/35 backdrop-blur-sm text-white hover:bg-black/55 transition-colors whitespace-nowrap"
+              >
+                <Search className="w-4 h-4 text-amber-300 shrink-0" />
+                <span>Ayah &amp; Tafsir</span>
+              </Link>
+
+              <Link
+                to="/groups"
+                className="flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-semibold border border-white/25 bg-black/35 backdrop-blur-sm text-white hover:bg-black/55 transition-colors whitespace-nowrap"
+              >
+                <Users className="w-4 h-4 text-emerald-300 shrink-0" />
+                <span>Study Circles</span>
+              </Link>
             </div>
           </div>
-
-          {/* Quick Action Buttons */}
-          <div className="flex flex-wrap items-center gap-2.5">
-            <button
-              type="button"
-              onClick={() => setActiveDashboardTab('quran')}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-500 shadow-md transition-colors cursor-pointer"
-            >
-              <BookOpen className="w-4 h-4" />
-              <span>Open Qur&rsquo;an Reader</span>
-            </button>
-
-            <Link
-              to="/tracker"
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-amber-500 text-stone-950 hover:bg-amber-400 shadow-md transition-colors"
-            >
-              <PlusCircle className="w-4 h-4" />
-              <span>Log Recitation</span>
-            </Link>
-
-            <Link
-              to="/ayah-finder"
-              className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-semibold border border-white/25 bg-black/35 backdrop-blur-sm text-white hover:bg-black/55 transition-colors"
-            >
-              <Search className="w-4 h-4 text-amber-300" />
-              <span>Ayah &amp; Tafsir</span>
-            </Link>
-
-            <Link
-              to="/groups"
-              className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-semibold border border-white/25 bg-black/35 backdrop-blur-sm text-white hover:bg-black/55 transition-colors"
-            >
-              <Users className="w-4 h-4 text-emerald-300" />
-              <span>Study Circles</span>
-            </Link>
-          </div>
         </div>
-      </div>
+      </section>
 
       {/* Dashboard Top View Switcher */}
       <div className="flex items-center gap-2 p-1.5 rounded-2xl border border-[var(--border-color)] bg-[var(--bg-surface)] shadow-xs max-w-md">
@@ -222,13 +229,13 @@ export default function DashboardPage() {
         {/* Streak Metric */}
         <div className="p-5 rounded-2xl border border-[var(--border-color)] bg-[var(--bg-surface)] shadow-xs flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center border border-amber-200 dark:border-amber-800 shrink-0">
-            <Flame className="w-6 h-6 animate-pulse" />
+            <Flame className="w-6 h-6" />
           </div>
           <div>
             <div className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
               Daily Streak
             </div>
-            <div className="text-2xl font-black text-[var(--text-primary)]">
+            <div className="text-2xl font-black text-[var(--text-primary)] tabular-nums">
               {summary?.streak || 0}{' '}
               <span className="text-xs font-semibold text-[var(--text-muted)]">Days</span>
             </div>
@@ -434,7 +441,7 @@ export default function DashboardPage() {
                 <div className="space-y-1">
                   <div className="flex items-center justify-between text-[10px] font-semibold text-[var(--text-muted)]">
                     <span>Collective Khatmah</span>
-                    <span className="text-emerald-600 font-bold">{grp.completed_juz_count || 0}/30 Juz</span>
+                    <span className="text-emerald-600 font-bold tabular-nums">{grp.completed_juz_count || 0}/30 Juz</span>
                   </div>
                   <div className="w-full h-1.5 rounded-full bg-[var(--bg-subtle)] overflow-hidden">
                     <div

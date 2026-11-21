@@ -93,11 +93,11 @@ function BismillahHeader({
         </div>
 
         {/* Calligraphy Writing Canvas */}
-        <div className="relative py-1 px-4 sm:px-6 inline-flex flex-col items-center justify-center min-h-[56px]">
-          <div className="relative flex items-center justify-center gap-1.5">
+        <div className="relative py-1 px-7 sm:px-9 inline-flex flex-col items-center justify-center min-h-[58px]">
+          <div className="relative flex items-center justify-center">
             {isWriting && (
               <span
-                className="inline-flex items-center text-amber-600 dark:text-amber-400 transition-transform duration-75"
+                className="absolute -left-6 sm:-left-7 inline-flex items-center text-amber-600 dark:text-amber-400 transition-opacity duration-150"
                 aria-hidden="true"
               >
                 <PenTool className="w-4 h-4 sm:w-5 sm:h-5 -rotate-45" />
@@ -105,7 +105,7 @@ function BismillahHeader({
             )}
 
             <div
-              className="font-arabic text-2xl sm:text-3xl lg:text-4xl font-extrabold bismillah-calligraphy tracking-wider leading-relaxed py-0.5"
+              className="font-arabic text-2xl sm:text-3xl lg:text-4xl font-extrabold bismillah-calligraphy tracking-wider leading-relaxed py-0.5 text-center"
               dir="rtl"
               lang="ar"
               style={{
@@ -124,7 +124,7 @@ function BismillahHeader({
         {/* English Translation */}
         {showTranslation && (
           <p
-            className={`text-[11px] sm:text-xs text-slate-900 dark:text-slate-200 font-serif italic max-w-md mx-auto font-medium transition-opacity duration-500 ${
+            className={`text-[11px] sm:text-xs text-[#2c3a1f] dark:text-emerald-100/90 font-serif italic max-w-md mx-auto font-medium transition-opacity duration-500 ${
               isFinished ? 'opacity-100' : 'opacity-45'
             }`}
           >
@@ -133,7 +133,7 @@ function BismillahHeader({
         )}
 
         {/* Subtle Bottom Gold Divider */}
-        <div className="w-20 h-0.5 bg-gradient-to-r from-transparent via-amber-500/40 to-transparent mt-0.5" />
+        <div className="w-24 h-0.5 bg-gradient-to-r from-transparent via-amber-500/45 to-transparent mt-0.5" />
       </div>
     </div>
   );
