@@ -46,13 +46,6 @@ export default function LoginPage() {
     }
   };
 
-  const handleQuickFill = (fillEmail, fillPassword, defaultFrom = 78, defaultTo = 114) => {
-    setEmail(fillEmail);
-    setPassword(fillPassword);
-    setFromSurah(defaultFrom);
-    setToSurah(defaultTo);
-  };
-
   return (
     <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -76,14 +69,15 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-xs font-semibold text-[var(--text-primary)] mb-1">
-                Email Address
+                Email or Username
               </label>
               <div className="relative">
                 <Mail className="w-4 h-4 text-[var(--text-muted)] absolute left-3 top-3" />
                 <input
-                  type="email"
+                  type="text"
                   required
-                  placeholder="sister@example.com"
+                  autoComplete="username"
+                  placeholder="Enter your email or full name"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full text-xs rounded-xl border border-[var(--border-color)] bg-[var(--bg-primary)] pl-9 pr-3 py-2.5 text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
@@ -147,35 +141,6 @@ export default function LoginPage() {
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </form>
-
-          {/* Sample Profiles Quick Fill */}
-          <div className="mt-6 pt-5 border-t border-[var(--border-color)]">
-            <div className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2.5 text-center">
-              Sample Learner Accounts (Instant Sign-in)
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => handleQuickFill('maryam@quranmate.demo', 'password123', 1, 4)}
-                className="px-3 py-2 rounded-xl border border-[var(--border-color)] bg-[var(--bg-subtle)] text-[11px] font-medium text-[var(--text-secondary)] hover:text-[var(--primary)] hover:border-[var(--primary-border)] text-left transition-colors"
-              >
-                <div className="font-bold text-[var(--text-primary)]">Maryam</div>
-                <div className="text-[10px] text-emerald-700 dark:text-emerald-300 font-semibold truncate">
-                  Surah 1 → 4 (Juz 1–5)
-                </div>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickFill('aisha@quranmate.demo', 'password123', 67, 114)}
-                className="px-3 py-2 rounded-xl border border-[var(--border-color)] bg-[var(--bg-subtle)] text-[11px] font-medium text-[var(--text-secondary)] hover:text-[var(--primary)] hover:border-[var(--primary-border)] text-left transition-colors"
-              >
-                <div className="font-bold text-[var(--text-primary)]">Aisha</div>
-                <div className="text-[10px] text-amber-700 dark:text-amber-300 font-semibold truncate">
-                  Surah 67 → 114 (Juz 29–30)
-                </div>
-              </button>
-            </div>
-          </div>
 
           <div className="mt-5 text-center text-xs text-[var(--text-secondary)]">
             Don&rsquo;t have an account?{' '}

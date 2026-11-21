@@ -1,4 +1,5 @@
 // Express Application Configuration
+import zlib from 'zlib';
 import express from 'express';
 import cors from 'cors';
 import authRoutes from './routes/authRoutes.js';
@@ -18,6 +19,26 @@ export function createApp() {
   app.use(cors());
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
+
+  // Lightweight gzip compression for JSON responses > 1KB
+  app.use((req, res, next) => {
+    const origJson = res.json.bind(res);
+    res.json = (body) => {
+      const acceptEncoding = req.headers['accept-encoding'] || '';
+      if (acceptEncoding.includes('gzip')) {
+        const jsonStr = JSON.stringify(body);
+        if (jsonStr && jsonStr.length > 1024) {
+          const compressed = zlib.gzipSync(jsonStr);
+          res.setHeader('Content-Encoding', 'gzip');
+          res.setHeader('Vary', 'Accept-Encoding');
+          res.setHeader('Content-Type', 'application/json; charset=utf-8');
+          return res.send(compressed);
+        }
+      }
+      return origJson(body);
+    };
+    next();
+  });
 
   // Health check endpoint
   app.get('/api/health', (req, res) => {

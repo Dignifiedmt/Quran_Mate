@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 
 :root {
   --font-arabic: 'Amiri', 'Scheherazade New', serif;
@@ -92,11 +93,11 @@ body {
   line-height: 2.2;
 }
 
-/* Sacred Bismillah Calligraphy - Pitch Dark Ink in Light Theme, Luminous Emerald in Dark */
+/* Sacred Bismillah Calligraphy - Rich Dark Olive (#243316) in Light Theme, Luminous Emerald-Olive in Dark */
 .bismillah-calligraphy {
-  color: #050505 !important;
+  color: #243316 !important;
   font-weight: 800;
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.08);
+  text-shadow: 0 1px 1px rgba(36, 51, 22, 0.12);
 }
 
 .dark .bismillah-calligraphy {

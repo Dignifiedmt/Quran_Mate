@@ -44,55 +44,74 @@ export async function getUsers(req, res) {
 
     const learners = await query(sql, params);
 
-    // Fetch availability and request/partnership status for each learner
-    const enriched = await Promise.all(
-      learners.map(async (learner) => {
-        const availList = await query(
-          'SELECT day, start_time, end_time FROM availability WHERE user_id = ?',
-          [learner.id]
-        );
+    if (learners.length === 0) {
+      return res.json({ learners: [] });
+    }
 
-        // Check if there is an active partnership
-        const partnership = await get(
-          `SELECT id FROM partnerships
-           WHERE ((user_a_id = ? AND user_b_id = ?) OR (user_a_id = ? AND user_b_id = ?))
-             AND status = 'active'`,
-          [currentUserId, learner.id, learner.id, currentUserId]
-        );
+    // Batch fetch availability, active partnerships, and pending requests (eliminates N+1 queries)
+    const [allAvail, myPartnerships, mySentReqs, myReceivedReqs] = await Promise.all([
+      query('SELECT user_id, day, start_time, end_time FROM availability ORDER BY id ASC'),
+      query(
+        `SELECT id, user_a_id, user_b_id FROM partnerships
+         WHERE (user_a_id = ? OR user_b_id = ?) AND status = 'active'`,
+        [currentUserId, currentUserId]
+      ),
+      query(
+        `SELECT id, receiver_id FROM partner_requests
+         WHERE sender_id = ? AND status = 'pending'`,
+        [currentUserId]
+      ),
+      query(
+        `SELECT id, sender_id FROM partner_requests
+         WHERE receiver_id = ? AND status = 'pending'`,
+        [currentUserId]
+      )
+    ]);
 
-        // Check pending requests
-        const sentRequest = await get(
-          `SELECT id, status FROM partner_requests
-           WHERE sender_id = ? AND receiver_id = ? AND status = 'pending'`,
-          [currentUserId, learner.id]
-        );
+    const availMap = new Map();
+    for (const a of allAvail) {
+      if (!availMap.has(a.user_id)) availMap.set(a.user_id, []);
+      availMap.get(a.user_id).push({ day: a.day, start_time: a.start_time, end_time: a.end_time });
+    }
 
-        const receivedRequest = await get(
-          `SELECT id, status FROM partner_requests
-           WHERE sender_id = ? AND receiver_id = ? AND status = 'pending'`,
-          [learner.id, currentUserId]
-        );
+    const partnerSet = new Set();
+    for (const p of myPartnerships) {
+      partnerSet.add(p.user_a_id === currentUserId ? p.user_b_id : p.user_a_id);
+    }
 
-        const isSameLevel = learner.memorization_stage === userStage;
+    const sentReqMap = new Map();
+    for (const r of mySentReqs) {
+      sentReqMap.set(r.receiver_id, r.id);
+    }
 
-        return {
-          ...learner,
-          sameLevelMatch: isSameLevel,
-          currentUserStage: userStage,
-          availability: availList,
-          isPartner: !!partnership,
-          hasSentPendingRequest: !!sentRequest,
-          hasReceivedPendingRequest: !!receivedRequest,
-          pendingRequestId: sentRequest ? sentRequest.id : (receivedRequest ? receivedRequest.id : null)
-        };
-      })
-    );
+    const receivedReqMap = new Map();
+    for (const r of myReceivedReqs) {
+      receivedReqMap.set(r.sender_id, r.id);
+    }
+
+    const enriched = learners.map((learner) => {
+      const availList = availMap.get(learner.id) || [];
+      const sentId = sentReqMap.get(learner.id);
+      const receivedId = receivedReqMap.get(learner.id);
+
+      return {
+        ...learner,
+        sameLevelMatch: learner.memorization_stage === userStage,
+        currentUserStage: userStage,
+        availability: availList,
+        isPartner: partnerSet.has(learner.id),
+        hasSentPendingRequest: !!sentId,
+        hasReceivedPendingRequest: !!receivedId,
+        pendingRequestId: sentId || receivedId || null
+      };
+    });
 
     // Filter by day if requested
     let filtered = enriched;
     if (day && day !== 'all') {
+      const targetDay = day.toLowerCase();
       filtered = enriched.filter((learner) =>
-        learner.availability.some((a) => a.day.toLowerCase() === day.toLowerCase())
+        learner.availability.some((a) => a.day.toLowerCase() === targetDay)
       );
     }
 
@@ -158,20 +177,30 @@ export async function getUserById(req, res) {
 export async function updateMe(req, res) {
   try {
     const currentUserId = req.user.id;
+    const existing = await get('SELECT * FROM users WHERE id = ?', [currentUserId]);
+    if (!existing) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
     const { name, bio, memorization_stage, memorized_from_surah, memorized_to_surah, goal, avatar_color } = req.body;
 
-    if (!name || !name.trim()) {
+    if (name !== undefined && !String(name).trim()) {
       return res.status(400).json({ error: 'Name cannot be empty' });
     }
 
-    const fromSurah = Number(memorized_from_surah) || 1;
-    const toSurah = Number(memorized_to_surah) || 114;
+    const finalName = name !== undefined ? String(name).trim() : existing.name;
+    const finalBio = bio !== undefined ? bio : existing.bio;
+    const finalStage = memorization_stage !== undefined ? memorization_stage : existing.memorization_stage;
+    const fromSurah = memorized_from_surah !== undefined ? (Number(memorized_from_surah) || 1) : (existing.memorized_from_surah || 1);
+    const toSurah = memorized_to_surah !== undefined ? (Number(memorized_to_surah) || 114) : (existing.memorized_to_surah || 114);
+    const finalGoal = goal !== undefined ? goal : existing.goal;
+    const finalColor = avatar_color !== undefined ? avatar_color : (existing.avatar_color || '#047857');
 
     await run(
       `UPDATE users
        SET name = ?, bio = ?, memorization_stage = ?, memorized_from_surah = ?, memorized_to_surah = ?, goal = ?, avatar_color = ?, updated_at = CURRENT_TIMESTAMP
        WHERE id = ?`,
-      [name.trim(), bio || '', memorization_stage || 'Beginning', fromSurah, toSurah, goal || 'Memorize consistently', avatar_color || '#047857', currentUserId]
+      [finalName, finalBio, finalStage, fromSurah, toSurah, finalGoal, finalColor, currentUserId]
     );
 
     const updated = await get(

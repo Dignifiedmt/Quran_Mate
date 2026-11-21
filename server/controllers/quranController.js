@@ -244,6 +244,7 @@ const SURAH_CACHE = {};
 
 export async function getSurahs(req, res) {
   try {
+    res.set('Cache-Control', 'public, max-age=86400');
     return res.json({ surahs: ALL_SURAHS });
   } catch (err) {
     console.error('getSurahs error:', err);
@@ -260,6 +261,7 @@ export async function getSurahByNumber(req, res) {
 
     // Check memory cache first
     if (SURAH_CACHE[surahNumber]) {
+      res.set('Cache-Control', 'public, max-age=86400');
       return res.json({ surah: SURAH_CACHE[surahNumber] });
     }
 

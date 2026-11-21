@@ -1,5 +1,5 @@
 // Central Learner Dashboard Page
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Flame,
@@ -7,29 +7,27 @@ import {
   BookOpen,
   Users,
   Search,
-  MessageSquare,
   Sparkles,
   ArrowRight,
-  CheckCircle2,
   Clock,
   Video,
   PlusCircle,
   TrendingUp,
   Award,
   Layers,
-  Home,
-  Sliders,
-  User,
-  Inbox
+  Inbox,
+  User
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { api } from '../services/api.js';
 import BismillahHeader from '../components/BismillahHeader.jsx';
 import BismillahLoader from '../components/BismillahLoader.jsx';
-import { SCREEN_SECTIONS } from '../components/AllScreensDirectory.jsx';
 import BrandLogo from '../components/BrandLogo.jsx';
 import DashboardQuranSection from '../components/DashboardQuranSection.jsx';
 import CreateGroupModal from '../components/CreateGroupModal.jsx';
+import MemorizationProgressCard from '../components/MemorizationProgressCard.jsx';
+import InAppVideoModal from '../components/InAppVideoModal.jsx';
+import heroQuranBackdrop from '../assets/images/hero_quran_backdrop_1795241713292.jpg';
 
 export default function DashboardPage() {
   const { user, activePartnershipId } = useAuth();
@@ -42,6 +40,7 @@ export default function DashboardPage() {
   const [studyGroups, setStudyGroups] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isCreateCircleOpen, setIsCreateCircleOpen] = useState(false);
+  const [activeVideoSession, setActiveVideoSession] = useState(null);
 
   useEffect(() => {
     async function loadDashboardData() {
@@ -77,11 +76,15 @@ export default function DashboardPage() {
     loadDashboardData();
   }, []);
 
-  const todayDateFormatted = new Date().toLocaleDateString('en-US', {
-    weekday: 'long',
-    month: 'short',
-    day: 'numeric',
-  });
+  const todayDateFormatted = useMemo(
+    () =>
+      new Date().toLocaleDateString('en-US', {
+        weekday: 'long',
+        month: 'short',
+        day: 'numeric',
+      }),
+    []
+  );
 
   if (loading) {
     return (
@@ -94,21 +97,40 @@ export default function DashboardPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-in fade-in duration-300">
-      {/* Top Welcome Header */}
-      <div className="relative rounded-3xl border border-[var(--border-color)] bg-[var(--bg-surface)] p-6 sm:p-8 shadow-xs overflow-hidden">
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+      {/* Top Welcome Header with Holy Qur'an Background */}
+      <div className="relative rounded-3xl border border-emerald-900/40 bg-gradient-to-br from-emerald-950 via-[#152212] to-stone-950 p-6 sm:p-8 shadow-lg overflow-hidden">
+        {/* Background Qur'an Photograph */}
+        <img
+          src={heroQuranBackdrop}
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 w-full h-full object-cover object-center select-none pointer-events-none"
+          referrerPolicy="no-referrer"
+          loading="eager"
+          decoding="async"
+        />
+
+        {/* Measured Contrast Scrim */}
+        <div
+          className="absolute inset-0 bg-gradient-to-r from-black/82 via-emerald-950/75 to-black/70 pointer-events-none"
+          aria-hidden="true"
+        />
+
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="flex items-start gap-4">
-            <BrandLogo size="lg" className="shrink-0 hidden sm:flex mt-1 rounded-2xl shadow-md" />
-            <div className="space-y-2">
-              <BismillahHeader showTranslation={false} className="py-0 mb-1" />
-              <div className="flex items-center gap-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-                <Sparkles className="w-3.5 h-3.5" />
+            <BrandLogo size="lg" className="shrink-0 hidden sm:flex mt-1 rounded-2xl shadow-lg ring-1 ring-amber-300/30" />
+            <div className="space-y-2.5">
+              <div className="inline-block rounded-2xl bg-[#fbfbf9]/92 dark:bg-[#0f1412]/88 backdrop-blur-md border border-amber-200/60 dark:border-emerald-800/60 px-4 py-1.5 shadow-sm">
+                <BismillahHeader showTranslation={false} className="my-0" />
+              </div>
+              <div className="flex items-center gap-2 text-xs font-semibold text-amber-200">
+                <Sparkles className="w-3.5 h-3.5 text-amber-300" />
                 <span>Learner Command Center &bull; {todayDateFormatted}</span>
               </div>
-              <h1 className="text-2xl sm:text-4xl font-extrabold text-[var(--text-primary)] tracking-tight">
+              <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight drop-shadow-xs">
                 Assalamu Alaikum, {user?.name ? user.name.split(' ')[0] : 'Sister'}!
               </h1>
-              <p className="text-sm text-[var(--text-secondary)] max-w-xl">
+              <p className="text-sm text-stone-100/90 max-w-xl">
                 May Allah bless your recitation, expand your heart with the Qur&rsquo;an, and grant you steadfast consistency in your Hifz journey today.
               </p>
             </div>
@@ -119,7 +141,7 @@ export default function DashboardPage() {
             <button
               type="button"
               onClick={() => setActiveDashboardTab('quran')}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 shadow-xs transition-colors cursor-pointer"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-500 shadow-md transition-colors cursor-pointer"
             >
               <BookOpen className="w-4 h-4" />
               <span>Open Qur&rsquo;an Reader</span>
@@ -127,7 +149,7 @@ export default function DashboardPage() {
 
             <Link
               to="/tracker"
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] shadow-xs transition-colors"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-amber-500 text-stone-950 hover:bg-amber-400 shadow-md transition-colors"
             >
               <PlusCircle className="w-4 h-4" />
               <span>Log Recitation</span>
@@ -135,17 +157,17 @@ export default function DashboardPage() {
 
             <Link
               to="/ayah-finder"
-              className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-semibold border border-emerald-200 dark:border-emerald-800/60 bg-emerald-50/60 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition-colors"
+              className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-semibold border border-white/25 bg-black/35 backdrop-blur-sm text-white hover:bg-black/55 transition-colors"
             >
-              <Search className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+              <Search className="w-4 h-4 text-amber-300" />
               <span>Ayah &amp; Tafsir</span>
             </Link>
 
             <Link
               to="/groups"
-              className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-semibold border border-indigo-200 dark:border-indigo-800/60 bg-indigo-50/60 dark:bg-indigo-950/40 text-indigo-800 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition-colors"
+              className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-semibold border border-white/25 bg-black/35 backdrop-blur-sm text-white hover:bg-black/55 transition-colors"
             >
-              <Users className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+              <Users className="w-4 h-4 text-emerald-300" />
               <span>Study Circles</span>
             </Link>
           </div>
@@ -207,7 +229,7 @@ export default function DashboardPage() {
               Daily Streak
             </div>
             <div className="text-2xl font-black text-[var(--text-primary)]">
-              {summary?.userStreak || 0}{' '}
+              {summary?.streak || 0}{' '}
               <span className="text-xs font-semibold text-[var(--text-muted)]">Days</span>
             </div>
             <div className="text-[11px] text-amber-700 dark:text-amber-400 font-medium flex items-center gap-1">
@@ -222,18 +244,18 @@ export default function DashboardPage() {
           <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-200 dark:border-emerald-800 shrink-0">
             <CalendarCheck className="w-6 h-6" />
           </div>
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <div className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
               Today&rsquo;s Quran Goal
             </div>
             <div className="text-sm font-bold text-[var(--text-primary)] truncate">
-              {user?.daily_goal || '1 Juz per day'}
+              {user?.goal || '1 Juz per day'}
             </div>
             <Link
               to="/tracker"
               className="text-[11px] text-[var(--primary)] font-semibold hover:underline flex items-center gap-1 mt-0.5"
             >
-              <span>{summary?.todayLogged ? 'Logged today ✓' : 'Tap to log now'}</span>
+              <span>{summary?.today?.hasCompletedToday ? 'Logged today ✓' : 'Tap to log now'}</span>
               <ArrowRight className="w-3 h-3" />
             </Link>
           </div>
@@ -284,6 +306,9 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* Dedicated Quran Memorization Progress Tracker */}
+      <MemorizationProgressCard />
+
       {/* Upcoming Peer Study Sessions (If Any) */}
       {upcomingSessions.length > 0 && (
         <div className="p-5 rounded-2xl border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/50 dark:bg-emerald-950/20 space-y-3">
@@ -300,34 +325,46 @@ export default function DashboardPage() {
             </Link>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {upcomingSessions.map((session) => (
-              <div
-                key={session.id}
-                className="p-3.5 rounded-xl border border-emerald-200/80 dark:border-emerald-900/80 bg-[var(--bg-surface)] flex items-center justify-between gap-3 shadow-2xs"
-              >
-                <div className="space-y-1 min-w-0">
-                  <div className="text-xs font-bold text-[var(--text-primary)] truncate">
-                    {session.topic || 'Quran Recitation Session'}
+            {upcomingSessions.map((session) => {
+              const isGoogleMeet = session.meeting_link?.includes('meet.google.com');
+              return (
+                <div
+                  key={session.id}
+                  className="p-3.5 rounded-xl border border-emerald-200/80 dark:border-emerald-900/80 bg-[var(--bg-surface)] flex items-center justify-between gap-3 shadow-2xs"
+                >
+                  <div className="space-y-1 min-w-0">
+                    <div className="text-xs font-bold text-[var(--text-primary)] truncate">
+                      {session.title || 'Quran Recitation Session'}
+                    </div>
+                    <div className="text-[11px] text-[var(--text-muted)] flex items-center gap-2">
+                      <span>{session.session_date} at {session.start_time}</span>
+                      <span>&bull;</span>
+                      <span>{session.duration_minutes} mins</span>
+                    </div>
                   </div>
-                  <div className="text-[11px] text-[var(--text-muted)] flex items-center gap-2">
-                    <span>{session.scheduled_date} at {session.scheduled_time}</span>
-                    <span>&bull;</span>
-                    <span>{session.duration_minutes} mins</span>
-                  </div>
+                  {isGoogleMeet ? (
+                    <a
+                      href={session.meeting_link}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 transition-colors shadow-2xs shrink-0"
+                    >
+                      <Video className="w-3.5 h-3.5" />
+                      <span>Join Meet</span>
+                    </a>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setActiveVideoSession(session)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 transition-colors shadow-2xs shrink-0 cursor-pointer"
+                    >
+                      <Video className="w-3.5 h-3.5" />
+                      <span>Join In-App</span>
+                    </button>
+                  )}
                 </div>
-                {session.meeting_link && (
-                  <a
-                    href={session.meeting_link}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 transition-colors shadow-2xs shrink-0"
-                  >
-                    <Video className="w-3.5 h-3.5" />
-                    <span>Join Call</span>
-                  </a>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
@@ -426,71 +463,94 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {/* ALL SCREENS & FULL APP DIRECTORY */}
-      <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[var(--border-color)] pb-3">
-          <div>
-            <h2 className="text-lg font-bold text-[var(--text-primary)] flex items-center gap-2">
-              <Layers className="w-5 h-5 text-emerald-600" />
-              <span>All Screens &amp; Feature Launchpad</span>
-            </h2>
-            <p className="text-xs text-[var(--text-muted)]">
-              Direct 1-click links to every screen, study tool, and sisterhood feature in Quran Mate
-            </p>
-          </div>
+      {/* Quick Study Tools Bar */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-bold uppercase tracking-wider text-[var(--text-muted)]">
+            Quick Study Tools
+          </h2>
+          <span className="text-[11px] text-[var(--text-muted)]">
+            Use &ldquo;All Screens&rdquo; in the top bar for full directory
+          </span>
         </div>
 
-        {/* Render Categorized Cards */}
-        <div className="space-y-6">
-          {SCREEN_SECTIONS.map((section) => (
-            <div key={section.category} className="space-y-2.5">
-              <div className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">
-                {section.category}
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {section.items.map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <Link
-                      key={item.path}
-                      to={item.path}
-                      className="p-4 rounded-2xl border border-[var(--border-color)] bg-[var(--bg-surface)] hover:bg-[var(--bg-subtle)] hover:border-[var(--primary-border)] transition-all flex items-start gap-3.5 group shadow-2xs"
-                    >
-                      <div className={`p-2.5 rounded-xl border ${item.color} shrink-0 group-hover:scale-105 transition-transform`}>
-                        <Icon className="w-5 h-5" />
-                      </div>
-                      <div className="flex-1 min-w-0 space-y-1">
-                        <div className="flex items-center justify-between gap-1">
-                          <span className="text-xs font-bold text-[var(--text-primary)] group-hover:text-[var(--primary)] transition-colors truncate">
-                            {item.name}
-                          </span>
-                          {item.badge && (
-                            <span className="text-[9px] font-semibold px-1.5 py-0.2 rounded-full bg-[var(--bg-subtle)] text-[var(--text-muted)] border border-[var(--border-subtle)] shrink-0">
-                              {item.badge}
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-[11px] text-[var(--text-secondary)] leading-snug line-clamp-2">
-                          {item.description}
-                        </p>
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {[
+            {
+              name: 'Holy Qur\'an Suite',
+              description: 'Full 114-Surah reader, Juz index & audio recitation',
+              path: '/quran',
+              icon: BookOpen,
+              color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-800',
+            },
+            {
+              name: 'Ayah & Tafsir Finder',
+              description: 'Search verses by keyword or reference & save notes',
+              path: '/ayah-finder',
+              icon: Search,
+              color: 'text-teal-600 bg-teal-50 dark:bg-teal-950/60 border-teal-200 dark:border-teal-800',
+            },
+            {
+              name: 'Partner Requests',
+              description: 'Review incoming & sent accountability invitations',
+              path: '/requests',
+              icon: Inbox,
+              color: 'text-amber-600 bg-amber-50 dark:bg-amber-950/60 border-amber-200 dark:border-amber-800',
+            },
+            {
+              name: 'My Profile & Schedule',
+              description: 'Update Hifz goals, weekly slots & bookmarks',
+              path: '/profile',
+              icon: User,
+              color: 'text-indigo-600 bg-indigo-50 dark:bg-indigo-950/60 border-indigo-200 dark:border-indigo-800',
+            },
+          ].map((tool) => {
+            const Icon = tool.icon;
+            return (
+              <Link
+                key={tool.path}
+                to={tool.path}
+                className="p-4 rounded-2xl border border-[var(--border-color)] bg-[var(--bg-surface)] hover:bg-[var(--bg-subtle)] hover:border-[var(--primary-border)] transition-all flex items-start gap-3 group shadow-2xs"
+              >
+                <div className={`p-2.5 rounded-xl border ${tool.color} shrink-0`}>
+                  <Icon className="w-4 h-4" />
+                </div>
+                <div className="min-w-0 space-y-0.5">
+                  <div className="text-xs font-bold text-[var(--text-primary)] group-hover:text-[var(--primary)] transition-colors truncate">
+                    {tool.name}
+                  </div>
+                  <p className="text-[11px] text-[var(--text-secondary)] leading-snug line-clamp-2">
+                    {tool.description}
+                  </p>
+                </div>
+              </Link>
+            );
+          })}
         </div>
       </div>
       </>
       )}
 
+      {/* In-App Jitsi Video Modal for Dashboard Upcoming Sessions */}
+      <InAppVideoModal
+        isOpen={Boolean(activeVideoSession)}
+        onClose={() => setActiveVideoSession(null)}
+        roomName={
+          activeVideoSession?.meeting_link?.includes('meet.jit.si/')
+            ? activeVideoSession.meeting_link.split('meet.jit.si/')[1].split('#')[0]
+            : `QuranMate-Session-${activeVideoSession?.id || 'Halaqah'}`
+        }
+        title={activeVideoSession?.title || 'Live Recitation Session'}
+        subtitle={`${activeVideoSession?.session_date || ''} at ${activeVideoSession?.start_time || ''} • In-App Jitsi Room`}
+      />
+
       {/* Create Study Room Modal accessible to all */}
       <CreateGroupModal
         isOpen={isCreateCircleOpen}
         onClose={() => setIsCreateCircleOpen(false)}
-        onCreated={() => {
+        onCreated={(newGroupId) => {
           setIsCreateCircleOpen(false);
+          if (newGroupId) navigate(`/groups/${newGroupId}`);
         }}
       />
     </div>

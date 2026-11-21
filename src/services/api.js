@@ -7,6 +7,7 @@ export function getAuthToken() {
 }
 
 export function setAuthToken(token) {
+  apiCache.clear();
   if (token) {
     localStorage.setItem('quran_mate_token', token);
   } else {
@@ -14,7 +15,15 @@ export function setAuthToken(token) {
   }
 }
 
+const apiCache = new Map();
+const CACHE_TTL_MS = 15000;
+
 async function request(endpoint, options = {}) {
+  const method = (options.method || 'GET').toUpperCase();
+  if (method !== 'GET') {
+    apiCache.clear();
+  }
+
   const token = getAuthToken();
   const headers = {
     'Content-Type': 'application/json',
@@ -30,7 +39,7 @@ async function request(endpoint, options = {}) {
   const response = await fetch(`${BASE_URL}${endpoint}`, config);
 
   if (response.status === 401) {
-    // If unauthorized, clear token and notify
+    apiCache.clear();
     setAuthToken(null);
     window.dispatchEvent(new CustomEvent('auth:expired'));
   }
@@ -48,6 +57,34 @@ async function request(endpoint, options = {}) {
   return data;
 }
 
+function cachedGet(endpoint, ttlMs = CACHE_TTL_MS) {
+  const now = Date.now();
+  const cached = apiCache.get(endpoint);
+  if (cached && now - cached.timestamp < ttlMs) {
+    return cached.promise;
+  }
+  const promise = request(endpoint).catch((err) => {
+    apiCache.delete(endpoint);
+    throw err;
+  });
+  apiCache.set(endpoint, { promise, timestamp: now });
+  return promise;
+}
+
+const quranCache = new Map();
+
+async function cachedQuranRequest(key, fetcher) {
+  if (quranCache.has(key)) {
+    return quranCache.get(key);
+  }
+  const pending = fetcher().catch((err) => {
+    quranCache.delete(key);
+    throw err;
+  });
+  quranCache.set(key, pending);
+  return pending;
+}
+
 export const api = {
   // Authentication
   register: (payload) => request('/auth/register', { method: 'POST', body: JSON.stringify(payload) }),
@@ -62,28 +99,28 @@ export const api = {
     if (params.day) query.set('day', params.day);
     if (params.search) query.set('search', params.search);
     if (params.sameLevelOnly) query.set('sameLevelOnly', params.sameLevelOnly);
-    return request(`/users?${query.toString()}`);
+    return cachedGet(`/users?${query.toString()}`);
   },
-  getUserById: (id) => request(`/users/${id}`),
+  getUserById: (id) => cachedGet(`/users/${id}`),
   updateProfile: (payload) => request('/users/me', { method: 'PUT', body: JSON.stringify(payload) }),
-  getAvailability: () => request('/users/me/availability'),
+  getAvailability: () => cachedGet('/users/me/availability'),
   updateAvailability: (slots) => request('/users/me/availability', { method: 'PUT', body: JSON.stringify({ slots }) }),
 
   // Bookmarks
-  getBookmarks: () => request('/users/me/bookmarks'),
+  getBookmarks: () => cachedGet('/users/me/bookmarks'),
   addBookmark: (payload) => request('/users/me/bookmarks', { method: 'POST', body: JSON.stringify(payload) }),
   deleteBookmark: (id) => request(`/users/me/bookmarks/${id}`, { method: 'DELETE' }),
 
   // Partner Requests
   sendPartnerRequest: (receiverId, note) =>
     request('/partner-requests', { method: 'POST', body: JSON.stringify({ receiver_id: receiverId, note }) }),
-  getReceivedRequests: () => request('/partner-requests/received'),
-  getSentRequests: () => request('/partner-requests/sent'),
+  getReceivedRequests: () => cachedGet('/partner-requests/received'),
+  getSentRequests: () => cachedGet('/partner-requests/sent'),
   acceptRequest: (id) => request(`/partner-requests/${id}/accept`, { method: 'PATCH' }),
   declineRequest: (id) => request(`/partner-requests/${id}/decline`, { method: 'PATCH' }),
 
   // Active Partnership & Check-ins
-  getCurrentPartnership: () => request('/partnerships/current'),
+  getCurrentPartnership: () => cachedGet('/partnerships/current'),
   toggleCheckin: (partnershipId, notes = '') =>
     request(`/partnerships/${partnershipId}/checkins`, { method: 'POST', body: JSON.stringify({ notes }) }),
   endPartnership: (partnershipId) =>
@@ -94,11 +131,13 @@ export const api = {
   sendMessage: (partnershipId, text) =>
     request(`/partnerships/${partnershipId}/messages`, { method: 'POST', body: JSON.stringify({ text }) }),
 
-  // Quran & Ayah Finder
-  getAyah: (reference) => request(`/quran/ayah/${encodeURIComponent(reference)}`),
-  getSurah: (number) => request(`/quran/surah/${number}`),
+  // Quran & Ayah Finder (cached in memory per session)
+  getAyah: (reference) =>
+    cachedQuranRequest(`ayah:${reference}`, () => request(`/quran/ayah/${encodeURIComponent(reference)}`)),
+  getSurah: (number) =>
+    cachedQuranRequest(`surah:${number}`, () => request(`/quran/surah/${number}`)),
   searchAyahs: (query) => request(`/quran/search?query=${encodeURIComponent(query)}`),
-  getSurahs: () => request('/quran/surahs'),
+  getSurahs: () => cachedQuranRequest('surahs:all', () => request('/quran/surahs')),
   getRandomAyah: () => request('/quran/random'),
 
   // Gemini Image Generation (Reflection Cards)
@@ -106,12 +145,12 @@ export const api = {
     request('/images/generate', { method: 'POST', body: JSON.stringify(params) }),
 
   // Daily Quran Habit & Study Tracker
-  getTrackerSummary: () => request('/tracker/summary'),
+  getTrackerSummary: () => cachedGet('/tracker/summary'),
   getTrackerLogs: (params = {}) => {
     const query = new URLSearchParams();
     if (params.date) query.set('date', params.date);
     if (params.limit) query.set('limit', params.limit);
-    return request(`/tracker/logs?${query.toString()}`);
+    return cachedGet(`/tracker/logs?${query.toString()}`);
   },
   createTrackerLog: (payload) =>
     request('/tracker/logs', { method: 'POST', body: JSON.stringify(payload) }),
@@ -119,7 +158,7 @@ export const api = {
     request(`/tracker/logs/${id}`, { method: 'DELETE' }),
 
   // Peer Session Scheduling
-  getSessions: () => request('/sessions'),
+  getSessions: () => cachedGet('/sessions'),
   createSession: (payload) =>
     request('/sessions', { method: 'POST', body: JSON.stringify(payload) }),
   updateSession: (id, payload) =>
@@ -132,7 +171,7 @@ export const api = {
     const query = new URLSearchParams();
     if (params.category) query.set('category', params.category);
     if (params.search) query.set('search', params.search);
-    return request(`/groups?${query.toString()}`);
+    return cachedGet(`/groups?${query.toString()}`);
   },
   getGroupById: (id) => request(`/groups/${id}`),
   createGroup: async (payload) => {

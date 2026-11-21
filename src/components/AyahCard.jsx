@@ -4,12 +4,14 @@ import { Copy, Check, Bookmark, Play, Pause, Volume2, MessageCircle, CheckCircle
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { api } from '../services/api.js';
+import PartnerFeatureModal from './PartnerFeatureModal.jsx';
 
 export default function AyahCard({ ayah, onBookmarkChange, onReflect }) {
   const [copied, setCopied] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [bookmarkLoading, setBookmarkLoading] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [showPartnerModal, setShowPartnerModal] = useState(false);
   const audioRef = useRef(null);
   const { user, activePartnershipId } = useAuth();
   const navigate = useNavigate();
@@ -83,7 +85,7 @@ export default function AyahCard({ ayah, onBookmarkChange, onReflect }) {
 
   const handleStudyWithMate = () => {
     if (!activePartnershipId) {
-      navigate('/discover');
+      setShowPartnerModal(true);
       return;
     }
     const text = `Assalamu alaikum! Would you like to review this Ayah together today?\nSurah ${ayah.surahEnglishName || ayah.surahNumber} (${ayah.surahNumber}:${ayah.ayahNumber || ayah.numberInSurah}):\n"${ayah.arabicText}"`;
@@ -219,6 +221,14 @@ export default function AyahCard({ ayah, onBookmarkChange, onReflect }) {
           </button>
         </div>
       </div>
+
+      {/* Guidance modal for learners without an active partner */}
+      <PartnerFeatureModal
+        isOpen={showPartnerModal}
+        onClose={() => setShowPartnerModal(false)}
+        featureName="Study Ayah with Quran Mate"
+        featureDescription="Sending this Ayah coordinates mutual revision directly in your 1-to-1 partner chat. Pair with an accountability sister or brother to review and test each other daily!"
+      />
     </div>
   );
 }

@@ -13,22 +13,13 @@ export function AuthProvider({ children }) {
   const [error, setError] = useState(null);
 
   const fetchProfile = useCallback(async () => {
-    let token = getAuthToken();
-    if (!token) {
-      try {
-        // Seamlessly auto-connect to primary learner Maryam Al-Fassi so Dashboard, Tracker, Mate & Discover tabs are immediately live
-        const loginData = await api.login({ email: 'maryam@quranmate.demo', password: 'password123' });
-        if (loginData?.token) {
-          setAuthToken(loginData.token);
-          token = loginData.token;
-        }
-      } catch (e) {
-        console.warn('Initial session initialization fallback:', e);
-      }
-    }
+    const token = getAuthToken();
 
     if (!token) {
       setUser(null);
+      setAvailability([]);
+      setActivePartnershipId(null);
+      setPartnerId(null);
       setIsLoading(false);
       return;
     }
@@ -57,6 +48,7 @@ export function AuthProvider({ children }) {
       setUser(null);
       setAvailability([]);
       setActivePartnershipId(null);
+      setPartnerId(null);
     };
 
     const handleUpdated = () => {
@@ -103,10 +95,6 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const demoLogin = async (email) => {
-    return login(email, 'password123');
-  };
-
   const logout = () => {
     setAuthToken(null);
     setUser(null);
@@ -114,6 +102,10 @@ export function AuthProvider({ children }) {
     setActivePartnershipId(null);
     setPartnerId(null);
   };
+
+  const updateUser = useCallback((nextUser) => {
+    setUser(nextUser);
+  }, []);
 
   const updateProfile = async (profileData) => {
     const data = await api.updateProfile(profileData);
@@ -138,8 +130,8 @@ export function AuthProvider({ children }) {
         error,
         login,
         register,
-        demoLogin,
         logout,
+        updateUser,
         updateProfile,
         updateAvailabilitySlots,
         refreshProfile: fetchProfile,

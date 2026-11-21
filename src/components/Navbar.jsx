@@ -32,44 +32,39 @@ import AllScreensDirectory from './AllScreensDirectory.jsx';
 import PWAInstallButton from './PWAInstallButton.jsx';
 
 export default function Navbar() {
-  const { user, logout, demoLogin, activePartnershipId } = useAuth();
+  const { user, logout, activePartnershipId } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
 
-  const [isProfilesOpen, setIsProfilesOpen] = useState(false);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [isAllScreensOpen, setIsAllScreensOpen] = useState(false);
 
-  // Pre-seeded authentic learner accounts for testing without typing
-  const learnerProfiles = [
-    { name: 'Maryam Al-Fassi', stage: 'Juz 1–5', email: 'maryam@quranmate.demo' },
-    { name: 'Aisha Siddiqah', stage: 'Juz 29–30 (Paired with Fatimah)', email: 'aisha@quranmate.demo' },
-    { name: 'Fatimah Zahra', stage: 'Revision (Paired with Aisha)', email: 'fatimah@quranmate.demo' },
-    { name: 'Zainab Nur', stage: 'Beginning (Juz 30)', email: 'zainab@quranmate.demo' },
-    { name: 'Hafsah Bint Umar', stage: 'Juz 11–15', email: 'hafsah@quranmate.demo' },
-  ];
-
-  const handleProfileSwitch = async (email) => {
-    setIsProfilesOpen(false);
-    setIsMobileDrawerOpen(false);
-    await demoLogin(email);
-    navigate('/dashboard');
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
   };
 
-  // The Core Four Tabs Navigation of Quran Mate
-  const navLinks = [
-    { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, desc: 'Overview & Qur\'an Reciter' },
-    { label: 'Tracker', path: '/tracker', icon: CalendarCheck, desc: 'Streaks & weekly chart' },
-    {
-      label: 'My Mate',
-      path: '/partnership',
-      icon: Flame,
-      desc: 'Daily check-in & streaks',
-      badge: activePartnershipId ? 'Active' : null,
-    },
-    { label: 'Discover', path: '/discover', icon: Users, desc: 'Find compatible partners' },
-  ];
+  // The Core Four Tabs Navigation of Quran Mate (when authenticated) or Public Links
+  const navLinks = user
+    ? [
+        { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, desc: 'Overview & Qur\'an Reciter' },
+        { label: 'Tracker', path: '/tracker', icon: CalendarCheck, desc: 'Streaks & weekly chart' },
+        {
+          label: 'My Mate',
+          path: '/partnership',
+          icon: Flame,
+          desc: 'Daily check-in & streaks',
+          badge: activePartnershipId ? 'Active' : null,
+        },
+        { label: 'Discover', path: '/discover', icon: Users, desc: 'Find compatible partners' },
+      ]
+    : [
+        { label: 'Home', path: '/home', icon: Home, desc: 'Platform overview' },
+        { label: 'Qur\'an', path: '/quran', icon: BookOpen, desc: '114 Surahs & audio' },
+        { label: 'Ayah Finder', path: '/ayah-finder', icon: Search, desc: 'Verse lookup & tafsir' },
+        { label: 'Study Circles', path: '/groups', icon: Layers, desc: 'Collaborative halaqahs' },
+      ];
 
   const closeMobileMenu = () => setIsMobileDrawerOpen(false);
 
@@ -138,46 +133,6 @@ export default function Navbar() {
 
           {/* Right Action Bar */}
           <div className="flex items-center gap-1.5 sm:gap-2">
-            {/* Quick Profile Switcher (Clean, discreet) */}
-            <div className="relative hidden sm:block">
-              <button
-                onClick={() => setIsProfilesOpen(!isProfilesOpen)}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-xs font-medium transition-colors"
-                title="Switch active user profile"
-              >
-                <Users className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                <span className="hidden xl:inline">Switch Profile</span>
-                <ChevronDown className="w-3 h-3 opacity-60" />
-              </button>
-
-              {isProfilesOpen && (
-                <div className="absolute right-0 mt-2 w-72 rounded-2xl border border-[var(--border-color)] bg-[var(--bg-surface)] p-2 shadow-xl z-50 animate-in fade-in slide-in-from-top-2">
-                  <div className="px-3 py-1.5 text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider border-b border-[var(--border-color)] mb-1">
-                    Select Profile
-                  </div>
-                  {learnerProfiles.map((acc) => (
-                    <button
-                      key={acc.email}
-                      onClick={() => handleProfileSwitch(acc.email)}
-                      className={`w-full text-left px-3 py-2 rounded-xl text-xs transition-colors flex items-center justify-between ${
-                        user?.email === acc.email
-                          ? 'bg-[var(--primary-light)] text-[var(--primary)] font-bold'
-                          : 'text-[var(--text-primary)] hover:bg-[var(--bg-subtle)]'
-                      }`}
-                    >
-                      <div className="truncate pr-2">
-                        <div className="font-semibold text-xs">{acc.name}</div>
-                        <div className="text-[10px] text-[var(--text-muted)]">{acc.stage}</div>
-                      </div>
-                      {user?.email === acc.email && (
-                        <CheckCircle2 className="w-4 h-4 text-[var(--primary)] shrink-0" />
-                      )}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
             {/* PWA Install Button (3MTT App Style) */}
             <PWAInstallButton className="hidden md:flex" />
 
@@ -213,7 +168,7 @@ export default function Navbar() {
                 </Link>
 
                 <button
-                  onClick={logout}
+                  onClick={handleLogout}
                   title="Sign Out"
                   className="p-2 rounded-xl text-[var(--text-muted)] hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
                 >
@@ -448,31 +403,6 @@ export default function Navbar() {
                   </div>
                 </button>
               </div>
-
-              {/* Quick Profile Switching for Testing in Drawer */}
-              <div className="pt-2 border-t border-[var(--border-color)]">
-                <div className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider px-2 mb-2">
-                  Switch Active Account
-                </div>
-                <div className="space-y-1">
-                  {learnerProfiles.slice(0, 4).map((acc) => (
-                    <button
-                      key={acc.email}
-                      onClick={() => handleProfileSwitch(acc.email)}
-                      className={`w-full text-left px-3 py-2 rounded-xl text-xs flex items-center justify-between transition-colors ${
-                        user?.email === acc.email
-                          ? 'bg-[var(--primary-light)] text-[var(--primary)] font-bold'
-                          : 'text-[var(--text-secondary)] hover:bg-[var(--bg-subtle)]'
-                      }`}
-                    >
-                      <span className="truncate">{acc.name}</span>
-                      <span className="text-[10px] text-[var(--text-muted)] ml-2 shrink-0">
-                        {acc.stage.split(' ')[0]}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </div>
             </div>
 
             {/* Bottom of Drawer: Theme & Logout */}
@@ -501,7 +431,7 @@ export default function Navbar() {
                 <button
                   onClick={() => {
                     closeMobileMenu();
-                    logout();
+                    handleLogout();
                   }}
                   className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
                 >

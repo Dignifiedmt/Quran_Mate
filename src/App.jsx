@@ -1,5 +1,5 @@
 // Main Application Component
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext.jsx';
 import Navbar from './components/Navbar.jsx';
@@ -7,29 +7,29 @@ import MobileNav from './components/MobileNav.jsx';
 import PWAInstallBanner from './components/PWAInstallBanner.jsx';
 import BismillahLoader from './components/BismillahLoader.jsx';
 
-// Pages
-import WelcomePage from './pages/WelcomePage.jsx';
-import LoginPage from './pages/LoginPage.jsx';
-import RegisterPage from './pages/RegisterPage.jsx';
-import ProfileSetupPage from './pages/ProfileSetupPage.jsx';
-import DiscoverPage from './pages/DiscoverPage.jsx';
-import LearnerProfilePage from './pages/LearnerProfilePage.jsx';
-import PartnerRequestsPage from './pages/PartnerRequestsPage.jsx';
-import ActivePartnershipPage from './pages/ActivePartnershipPage.jsx';
-import MessagingPage from './pages/MessagingPage.jsx';
-import QuranPage from './pages/QuranPage.jsx';
-import AyahFinderPage from './pages/AyahFinderPage.jsx';
-import DailyTrackerPage from './pages/DailyTrackerPage.jsx';
-import MyProfilePage from './pages/MyProfilePage.jsx';
-import DashboardPage from './pages/DashboardPage.jsx';
-import GroupsDirectoryPage from './pages/GroupsDirectoryPage.jsx';
-import GroupRoomPage from './pages/GroupRoomPage.jsx';
+// Lazy-loaded Pages for fast initial bundle & smooth navigation
+const WelcomePage = lazy(() => import('./pages/WelcomePage.jsx'));
+const LoginPage = lazy(() => import('./pages/LoginPage.jsx'));
+const RegisterPage = lazy(() => import('./pages/RegisterPage.jsx'));
+const ProfileSetupPage = lazy(() => import('./pages/ProfileSetupPage.jsx'));
+const DiscoverPage = lazy(() => import('./pages/DiscoverPage.jsx'));
+const LearnerProfilePage = lazy(() => import('./pages/LearnerProfilePage.jsx'));
+const PartnerRequestsPage = lazy(() => import('./pages/PartnerRequestsPage.jsx'));
+const ActivePartnershipPage = lazy(() => import('./pages/ActivePartnershipPage.jsx'));
+const MessagingPage = lazy(() => import('./pages/MessagingPage.jsx'));
+const QuranPage = lazy(() => import('./pages/QuranPage.jsx'));
+const AyahFinderPage = lazy(() => import('./pages/AyahFinderPage.jsx'));
+const DailyTrackerPage = lazy(() => import('./pages/DailyTrackerPage.jsx'));
+const MyProfilePage = lazy(() => import('./pages/MyProfilePage.jsx'));
+const DashboardPage = lazy(() => import('./pages/DashboardPage.jsx'));
+const GroupsDirectoryPage = lazy(() => import('./pages/GroupsDirectoryPage.jsx'));
+const GroupRoomPage = lazy(() => import('./pages/GroupRoomPage.jsx'));
 
 // Protected Route Guard
 function ProtectedRoute({ children }) {
-  const { user, loading } = useAuth();
+  const { user, isLoading } = useAuth();
 
-  if (loading) {
+  if (isLoading) {
     return (
       <BismillahLoader
         message="Entering Quran Mate..."
@@ -56,7 +56,16 @@ export default function App() {
 
       {/* Main Content */}
       <main className="flex-1 pb-20 sm:pb-24">
-        <Routes>
+        <Suspense
+          fallback={
+            <BismillahLoader
+              message="Loading Quran Mate..."
+              submessage="In the name of Allah, the Entirely Merciful, the Especially Merciful"
+              fullScreen={false}
+            />
+          }
+        >
+          <Routes>
           {/* Public or Accessible Home Routes */}
           <Route
             path="/"
@@ -164,6 +173,7 @@ export default function App() {
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        </Suspense>
       </main>
 
       {/* Mobile Bottom Navigation */}

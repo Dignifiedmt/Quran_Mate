@@ -5,8 +5,10 @@ import { Users, CalendarCheck, Flame, LayoutDashboard } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 
 export default function MobileNav() {
-  const { activePartnershipId } = useAuth();
+  const { user, activePartnershipId } = useAuth();
   const location = useLocation();
+
+  if (!user) return null;
 
   // The 4 Core Primary Tabs of Quran Mate
   const items = [

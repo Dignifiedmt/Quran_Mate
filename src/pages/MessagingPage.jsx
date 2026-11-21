@@ -37,9 +37,19 @@ export default function MessagingPage() {
 
   useEffect(() => {
     fetchMessages();
-    // Poll messages every 5 seconds for light real-time-like coordination without heavy WebSockets
-    const interval = setInterval(fetchMessages, 5000);
-    return () => clearInterval(interval);
+    const interval = setInterval(() => {
+      if (!document.hidden) {
+        fetchMessages();
+      }
+    }, 5000);
+    const onVisible = () => {
+      if (!document.hidden) fetchMessages();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
   }, [id]);
 
   useEffect(() => {

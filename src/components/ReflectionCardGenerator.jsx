@@ -213,8 +213,8 @@ export default function ReflectionCardGenerator({ defaultAyahText = '', onShareW
 
     if (ornamentType === 'bismillah') {
       ctx.font = 'bold 36px "Amiri", "Traditional Arabic", serif';
-      // In light card theme, use deep dark black ink #09090b
-      ctx.fillStyle = (activeTheme.id === 'parchment' || activeTheme.id === 'rose' || activeTheme.id === 'minimal') ? '#09090b' : activeTheme.accent;
+      // In light card theme, use rich dark olive #243316
+      ctx.fillStyle = (activeTheme.id === 'parchment' || activeTheme.id === 'rose' || activeTheme.id === 'minimal') ? '#243316' : activeTheme.accent;
       ctx.fillText('بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ', width / 2, 140);
     } else if (ornamentType === 'crescent') {
       ctx.font = '40px sans-serif';
@@ -605,7 +605,7 @@ export default function ReflectionCardGenerator({ defaultAyahText = '', onShareW
                 <p
                   className="font-arabic text-lg sm:text-xl font-extrabold"
                   style={{
-                    color: (activeTheme.id === 'parchment' || activeTheme.id === 'rose' || activeTheme.id === 'minimal') ? '#09090b' : activeTheme.accent
+                    color: (activeTheme.id === 'parchment' || activeTheme.id === 'rose' || activeTheme.id === 'minimal') ? '#243316' : activeTheme.accent
                   }}
                 >
                   بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ

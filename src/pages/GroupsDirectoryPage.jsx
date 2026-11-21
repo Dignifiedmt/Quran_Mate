@@ -42,7 +42,10 @@ export default function GroupsDirectoryPage() {
   const [actionLoadingId, setActionLoadingId] = useState(null);
 
   useEffect(() => {
-    loadGroups();
+    const timer = setTimeout(() => {
+      loadGroups();
+    }, searchQuery ? 250 : 0);
+    return () => clearTimeout(timer);
   }, [selectedCategory, searchQuery]);
 
   async function loadGroups() {

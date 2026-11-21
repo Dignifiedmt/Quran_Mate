@@ -12,7 +12,6 @@ import {
   Sparkles,
   AlertCircle,
   XCircle,
-  HelpCircle,
   Video,
   ExternalLink,
   HeartHandshake
@@ -20,6 +19,7 @@ import {
 import { api } from '../services/api.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import SessionScheduler from '../components/SessionScheduler.jsx';
+import InAppVideoModal from '../components/InAppVideoModal.jsx';
 
 export default function ActivePartnershipPage() {
   const { refreshProfile } = useAuth();
@@ -31,6 +31,7 @@ export default function ActivePartnershipPage() {
   const [isUpdatingCheckin, setIsUpdatingCheckin] = useState(false);
   const [showEndModal, setShowEndModal] = useState(false);
   const [isEnding, setIsEnding] = useState(false);
+  const [isLiveCallOpen, setIsLiveCallOpen] = useState(false);
 
   const fetchPartnership = async () => {
     try {
@@ -91,31 +92,68 @@ export default function ActivePartnershipPage() {
     );
   }
 
-  // No active partnership empty state
+  // No active partnership empty state - optimized with immediate value & solo alternates
   if (!partnershipData) {
     return (
-      <div className="max-w-3xl mx-auto px-4 py-16 text-center">
-        <div className="w-16 h-16 rounded-3xl bg-amber-100 dark:bg-amber-950 text-amber-600 dark:text-amber-400 mx-auto flex items-center justify-center mb-4 shadow-sm">
-          <HeartHandshake className="w-8 h-8" />
+      <div className="max-w-3xl mx-auto px-4 py-12 space-y-8">
+        <div className="text-center rounded-3xl border border-[var(--border-color)] bg-[var(--bg-surface)] p-8 sm:p-10 shadow-xs relative overflow-hidden">
+          <div className="w-16 h-16 rounded-3xl bg-amber-100 dark:bg-amber-950 text-amber-600 dark:text-amber-400 mx-auto flex items-center justify-center mb-4 shadow-sm">
+            <HeartHandshake className="w-8 h-8" />
+          </div>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 text-[11px] font-bold border border-emerald-300 dark:border-emerald-800 mb-3">
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Connect &bull; Memorize &bull; Recite</span>
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-[var(--text-primary)]">
+            Find Your 1-to-1 Quran Mate
+          </h2>
+          <p className="text-xs sm:text-sm text-[var(--text-secondary)] mt-2 max-w-lg mx-auto leading-relaxed">
+            Having an accountability partner doubles study consistency. Pair with another learner at your exact stage for mutual daily check-ins, shared streaks, and live in-app recitation sessions.
+          </p>
+
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+            <Link
+              to="/discover"
+              className="px-6 py-2.5 rounded-xl text-xs font-bold bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] shadow-xs transition-all flex items-center gap-1.5"
+            >
+              <HeartHandshake className="w-4 h-4" />
+              <span>Discover Recommended Mates</span>
+            </Link>
+            <Link
+              to="/requests"
+              className="px-5 py-2.5 rounded-xl text-xs font-semibold border border-[var(--border-color)] text-[var(--text-primary)] hover:bg-[var(--bg-subtle)] transition-colors"
+            >
+              Check Received Requests
+            </Link>
+            <Link
+              to="/groups"
+              className="px-5 py-2.5 rounded-xl text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900 hover:bg-emerald-100 transition-colors"
+            >
+              Join a Group Circle
+            </Link>
+          </div>
         </div>
-        <h2 className="text-2xl font-bold text-[var(--text-primary)]">
-          No Active Quran Mate Yet
-        </h2>
-        <p className="text-xs sm:text-sm text-[var(--text-secondary)] mt-2 max-w-md mx-auto leading-relaxed">
-          The core differentiator of Quran Mate is having a dedicated 1-to-1 accountability partner who checks in on your daily memorization and revision.
-        </p>
-        <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
+
+        {/* Solo Learner Quick Access Card while searching for a partner */}
+        <div className="rounded-2xl border border-dashed border-[var(--border-color)] bg-[var(--bg-subtle)]/70 p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-2xl bg-[var(--primary-light)] text-[var(--primary)] flex items-center justify-center shrink-0 border border-[var(--primary-border)]">
+              <BookOpen className="w-5 h-5" />
+            </div>
+            <div>
+              <h4 className="text-sm font-bold text-[var(--text-primary)]">
+                Studying Solo For Today?
+              </h4>
+              <p className="text-xs text-[var(--text-secondary)] mt-0.5">
+                You can still log your personal recitation portions, track streaks, and practice in the Holy Qur&rsquo;an reader anytime!
+              </p>
+            </div>
+          </div>
           <Link
-            to="/discover"
-            className="px-6 py-2.5 rounded-xl text-xs font-bold bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] shadow-xs"
+            to="/tracker"
+            className="px-4 py-2 rounded-xl text-xs font-bold bg-[var(--bg-surface)] border border-[var(--border-color)] hover:border-[var(--primary)] text-[var(--text-primary)] hover:text-[var(--primary)] transition-all shrink-0 shadow-2xs"
           >
-            Find a Quran Mate
-          </Link>
-          <Link
-            to="/requests"
-            className="px-6 py-2.5 rounded-xl text-xs font-semibold border border-[var(--border-color)] text-[var(--text-primary)] hover:bg-[var(--bg-subtle)]"
-          >
-            Check Received Requests
+            Open Daily Tracker &rarr;
           </Link>
         </div>
       </div>
@@ -147,15 +185,23 @@ export default function ActivePartnershipPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
+          <button
+            onClick={() => setIsLiveCallOpen(true)}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition-all"
+            title="Start live recitation room inside the app without leaving"
+          >
+            <Video className="w-4 h-4 text-emerald-100" />
+            <span>Launch In-App Jitsi</span>
+          </button>
+
           <a
             href="https://meet.google.com/new"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition-all"
-            title="Start instant live recitation call on Google Meet"
+            className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-semibold border border-[var(--border-color)] bg-[var(--bg-surface)] hover:bg-[var(--bg-subtle)] text-[var(--text-secondary)] transition-all"
+            title="Start live recitation on Google Meet"
           >
-            <Video className="w-4 h-4 text-emerald-100" />
-            <span>Start Google Meet</span>
+            <span>Google Meet</span>
             <ExternalLink className="w-3 h-3 opacity-70" />
           </a>
 
@@ -168,6 +214,15 @@ export default function ActivePartnershipPage() {
           </Link>
         </div>
       </div>
+
+      {/* In-App Jitsi Video Modal for 1-to-1 Recitation */}
+      <InAppVideoModal
+        isOpen={isLiveCallOpen}
+        onClose={() => setIsLiveCallOpen(false)}
+        roomName={`QuranMate-Partner-${partnershipData.id}`}
+        title={`Live Recitation with ${partner?.name || 'Accountability Mate'}`}
+        subtitle="Recite, review, and correct tajweed live with your study mate right inside the app"
+      />
 
       {/* Side-by-Side Partners Overview */}
       <div>

@@ -1,5 +1,5 @@
 // Integrated Holy Qur'an Section for Dashboard
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo, memo } from 'react';
 import { Link } from 'react-router-dom';
 import {
   BookOpen,
@@ -10,24 +10,32 @@ import {
   ChevronRight,
   Search,
   Maximize2,
-  Sparkles,
-  ExternalLink,
-  RotateCcw
+  ExternalLink
 } from 'lucide-react';
 import BismillahHeader from './BismillahHeader.jsx';
 import { SURAHS_LIST } from '../data/surahsList.js';
-import { QURRA_LIST, getSurahAudioUrl } from '../data/quranReciters.js';
 import { api } from '../services/api.js';
 
-export default function DashboardQuranSection({ defaultSurahNumber = 1 }) {
+function DashboardQuranSection({ defaultSurahNumber = 1 }) {
   const [selectedSurahNumber, setSelectedSurahNumber] = useState(defaultSurahNumber);
   const [surahData, setSurahData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isPlaying, setIsPlaying] = useState(false);
   const [selectedReciter, setSelectedReciter] = useState('ar.alafasy');
-  const [audioUrl, setAudioUrl] = useState(() => getSurahAudioUrl('ar.alafasy', defaultSurahNumber));
+  const [audioUrl, setAudioUrl] = useState(() => {
+    const formattedNum = String(defaultSurahNumber).padStart(3, '0');
+    return `https://server8.mp3quran.net/afs/${formattedNum}.mp3`;
+  });
   const audioRef = useRef(null);
+
+  // Reciters
+  const RECITERS = [
+    { id: 'ar.alafasy', name: 'Mishary Rashid Alafasy' },
+    { id: 'ar.abdulbasitmurattal', name: 'AbdulBaset Murattal' },
+    { id: 'ar.saoodshuraym', name: 'Saood Ash-Shuraym' },
+    { id: 'ar.sudais', name: 'Abdur-Rahman As-Sudais' },
+  ];
 
   // Fetch Surah Ayahs from API or fallback
   useEffect(() => {
@@ -51,10 +59,18 @@ export default function DashboardQuranSection({ defaultSurahNumber = 1 }) {
     };
   }, [selectedSurahNumber]);
 
-  // Audio stream URL for complete Surah recitation
+  // Audio stream URL for complete Surah
   useEffect(() => {
-    const url = getSurahAudioUrl(selectedReciter, selectedSurahNumber);
-    setAudioUrl(url);
+    const formattedNum = String(selectedSurahNumber).padStart(3, '0');
+    const reciterBaseMap = {
+      'ar.alafasy': 'https://server8.mp3quran.net/afs',
+      'ar.abdulbasitmurattal': 'https://server7.mp3quran.net/basit',
+      'ar.saoodshuraym': 'https://server7.mp3quran.net/shur',
+      'ar.sudais': 'https://server11.mp3quran.net/sds',
+    };
+    const baseUrl = reciterBaseMap[selectedReciter] || reciterBaseMap['ar.alafasy'];
+
+    setAudioUrl(`${baseUrl}/${formattedNum}.mp3`);
     setIsPlaying(false);
     if (audioRef.current) {
       audioRef.current.pause();
@@ -78,16 +94,22 @@ export default function DashboardQuranSection({ defaultSurahNumber = 1 }) {
     }
   };
 
-  const filteredSurahs = SURAHS_LIST.filter(
-    (s) =>
-      s.englishName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.englishTranslation.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.name.includes(searchQuery) ||
-      String(s.number).includes(searchQuery)
-  );
+  const filteredSurahs = useMemo(() => {
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) return SURAHS_LIST;
+    return SURAHS_LIST.filter(
+      (s) =>
+        s.englishName.toLowerCase().includes(q) ||
+        s.englishTranslation.toLowerCase().includes(q) ||
+        s.name.includes(searchQuery) ||
+        String(s.number).includes(q)
+    );
+  }, [searchQuery]);
 
-  const currentSurahMeta =
-    SURAHS_LIST.find((s) => s.number === selectedSurahNumber) || SURAHS_LIST[0];
+  const currentSurahMeta = useMemo(
+    () => SURAHS_LIST.find((s) => s.number === selectedSurahNumber) || SURAHS_LIST[0],
+    [selectedSurahNumber]
+  );
 
   return (
     <div className="rounded-3xl border border-[var(--border-color)] bg-[var(--bg-surface)] shadow-xs overflow-hidden">
@@ -128,7 +150,6 @@ export default function DashboardQuranSection({ defaultSurahNumber = 1 }) {
           <BismillahHeader
             showTranslation={true}
             className="py-1"
-            enableReplay={true}
           />
         </div>
       </div>
@@ -228,9 +249,9 @@ export default function DashboardQuranSection({ defaultSurahNumber = 1 }) {
                 onChange={(e) => setSelectedReciter(e.target.value)}
                 className="text-xs rounded-xl border border-[var(--border-color)] bg-[var(--bg-primary)] px-2.5 py-1.5 text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--primary)] font-medium"
               >
-                {QURRA_LIST.map((r) => (
+                {RECITERS.map((r) => (
                   <option key={r.id} value={r.id}>
-                    {r.name} — {r.arabicName}
+                    {r.name}
                   </option>
                 ))}
               </select>
@@ -336,3 +357,5 @@ export default function DashboardQuranSection({ defaultSurahNumber = 1 }) {
     </div>
   );
 }
+
+export default memo(DashboardQuranSection);

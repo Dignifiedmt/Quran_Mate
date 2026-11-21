@@ -44,20 +44,33 @@ export default function GroupRoomPage() {
   const [sendingMessage, setSendingMessage] = useState(false);
   const messagesEndRef = useRef(null);
 
-  // Live Jitsi Recitation Call state
+  // Live Recitation Call state
   const [isLiveCallOpen, setIsLiveCallOpen] = useState(false);
+  const [meetingProvider, setMeetingProvider] = useState('in_app'); // 'in_app' | 'google_meet'
   const [copiedLink, setCopiedLink] = useState(false);
   const [khatmahActionLoading, setKhatmahActionLoading] = useState(null);
 
   useEffect(() => {
     loadGroupDetails();
 
-    // Poll updates every 6 seconds for live collaborative room sync
+    // Poll updates every 6 seconds when tab is visible
     const interval = setInterval(() => {
-      loadGroupDetails(false);
+      if (!document.hidden) {
+        loadGroupDetails(false);
+      }
     }, 6000);
 
-    return () => clearInterval(interval);
+    const onVisible = () => {
+      if (!document.hidden) {
+        loadGroupDetails(false);
+      }
+    };
+    document.addEventListener('visibilitychange', onVisible);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
   }, [id]);
 
   useEffect(() => {
@@ -179,8 +192,7 @@ export default function GroupRoomPage() {
   const completedPct = group.completed_percentage || 0;
   const isKhatmahFullyCompleted = completedCount === 30;
 
-  // Video Meeting Providers: Google Meet & Built-in Jitsi
-  const [meetingProvider, setMeetingProvider] = useState('google_meet'); // 'google_meet' | 'in_app'
+  // Video Meeting Providers: Built-in Jitsi & Google Meet
   const googleMeetUrl = group.google_meet_link || (group.meeting_link?.includes('meet.google.com') ? group.meeting_link : 'https://meet.google.com/new');
   const inAppMeetingUrl = (group.meeting_link && !group.meeting_link?.includes('meet.google.com')) ? group.meeting_link : `https://meet.jit.si/QuranMate-Halaqah-${group.id}`;
 
@@ -382,9 +394,9 @@ export default function GroupRoomPage() {
             <div className="w-full h-[520px] rounded-2xl overflow-hidden border border-[var(--border-color)] bg-black">
               {inAppMeetingUrl ? (
                 <iframe
-                  src={`${inAppMeetingUrl}#config.prejoinPageEnabled=false&config.disableDeepLinking=true`}
+                  src={`${inAppMeetingUrl}#config.prejoinPageEnabled=false&config.disableDeepLinking=true&config.startWithAudioMuted=false&config.startWithVideoMuted=false`}
                   title="Quran Mate Live Recitation Room"
-                  allow="camera; microphone; fullscreen; display-capture; autoplay"
+                  allow="camera; microphone; fullscreen; display-capture; autoplay; clipboard-write"
                   className="w-full h-full border-0"
                 />
               ) : null}

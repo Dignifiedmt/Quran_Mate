@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { api } from '../services/api.js';
 import { useAuth } from '../context/AuthContext.jsx';
+import InAppVideoModal from './InAppVideoModal.jsx';
 
 export default function SessionScheduler({ partnershipId, defaultPartner = null, onSessionLogged }) {
   const { user } = useAuth();
@@ -30,6 +31,7 @@ export default function SessionScheduler({ partnershipId, defaultPartner = null,
   // New session modal / form open
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [activeVideoRoom, setActiveVideoRoom] = useState(null);
 
   // Form inputs
   const tomorrow = new Date();
@@ -409,20 +411,35 @@ export default function SessionScheduler({ partnershipId, defaultPartner = null,
 
                     {/* Action buttons */}
                     <div className="flex items-center gap-2 flex-wrap">
-                      <a
-                        href={sess.meeting_link}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xs transition-all"
-                      >
-                        <Video className="w-3.5 h-3.5" />
-                        <span>
-                          {sess.meeting_link?.includes('meet.google.com')
-                            ? 'Join Google Meet'
-                            : 'Join Room'}
-                        </span>
-                        <ExternalLink className="w-3 h-3 opacity-70" />
-                      </a>
+                      {!sess.meeting_link?.includes('meet.google.com') ? (
+                        <button
+                          onClick={() => {
+                            const roomName = sess.meeting_link
+                              ? sess.meeting_link.split('/').pop().split('#')[0]
+                              : `QuranMate-Session-${sess.id}`;
+                            setActiveVideoRoom({
+                              roomName,
+                              title: sess.title,
+                              subtitle: `Scheduled study session with ${sess.otherParticipant?.name || 'Partner'}`
+                            });
+                          }}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xs transition-all"
+                        >
+                          <Video className="w-3.5 h-3.5" />
+                          <span>Join In-App Jitsi</span>
+                        </button>
+                      ) : (
+                        <a
+                          href={sess.meeting_link}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xs transition-all"
+                        >
+                          <Video className="w-3.5 h-3.5" />
+                          <span>Join Google Meet</span>
+                          <ExternalLink className="w-3 h-3 opacity-70" />
+                        </a>
+                      )}
 
                       <a
                         href={generateGoogleCalendarUrl(sess)}
@@ -496,6 +513,15 @@ export default function SessionScheduler({ partnershipId, defaultPartner = null,
           </div>
         </div>
       )}
+
+      {/* In-App Jitsi Video Modal for Scheduled Recitation */}
+      <InAppVideoModal
+        isOpen={!!activeVideoRoom}
+        onClose={() => setActiveVideoRoom(null)}
+        roomName={activeVideoRoom?.roomName || 'QuranMate-StudySession'}
+        title={activeVideoRoom?.title || 'Scheduled Recitation Session'}
+        subtitle={activeVideoRoom?.subtitle || 'Live peer recitation directly inside Quran Mate'}
+      />
     </div>
   );
 }

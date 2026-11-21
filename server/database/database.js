@@ -89,6 +89,23 @@ export async function getDb() {
     } catch (e) {
       // Column may already exist
     }
+    // Performance indexes on hot query paths
+    try {
+      dbInstance.exec(`
+        CREATE INDEX IF NOT EXISTS idx_availability_user ON availability(user_id);
+        CREATE INDEX IF NOT EXISTS idx_partnerships_users ON partnerships(user_a_id, user_b_id, status);
+        CREATE INDEX IF NOT EXISTS idx_requests_sender_receiver ON partner_requests(sender_id, receiver_id, status);
+        CREATE INDEX IF NOT EXISTS idx_checkins_lookup ON checkins(partnership_id, user_id, date);
+        CREATE INDEX IF NOT EXISTS idx_messages_partnership ON messages(partnership_id, id);
+        CREATE INDEX IF NOT EXISTS idx_tracker_user_date ON daily_tracker_logs(user_id, date);
+        CREATE INDEX IF NOT EXISTS idx_sessions_users ON study_sessions(creator_id, partner_id, session_date);
+        CREATE INDEX IF NOT EXISTS idx_group_members_lookup ON group_members(group_id, user_id);
+        CREATE INDEX IF NOT EXISTS idx_group_messages_group ON group_messages(group_id, id);
+        CREATE INDEX IF NOT EXISTS idx_bookmarks_user ON verse_bookmarks(user_id);
+      `);
+    } catch (e) {
+      // Ignore index creation error if table not yet present
+    }
     persist();
   }
 

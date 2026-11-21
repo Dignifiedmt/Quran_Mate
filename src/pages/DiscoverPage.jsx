@@ -59,8 +59,11 @@ export default function DiscoverPage() {
   };
 
   useEffect(() => {
-    fetchLearners();
-  }, [stage, day, sameLevelOnly]);
+    const timer = setTimeout(() => {
+      fetchLearners();
+    }, search ? 250 : 0);
+    return () => clearTimeout(timer);
+  }, [stage, day, sameLevelOnly, search]);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();

@@ -1,50 +1,38 @@
 // Welcome / Homepage - Quran Recitation & Peer Memorization Accountability Platform
 import React, { useState, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import {
   BookOpen,
   Users,
-  Flame,
-  Clock,
   ArrowRight,
-  CheckCircle2,
   Play,
   Pause,
   Volume2,
-  CalendarCheck,
   Search,
   MessageSquare,
-  ShieldCheck,
-  Sparkles,
   ChevronRight,
-  Send,
   UserCheck
 } from 'lucide-react';
 import BrandLogo from '../components/BrandLogo.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import BismillahHeader from '../components/BismillahHeader.jsx';
 import PWAInstallButton from '../components/PWAInstallButton.jsx';
+import heroQuranBackdrop from '../assets/images/hero_quran_backdrop_1795241713292.jpg';
 import firstQuranHeroImg from '../assets/images/quran_hero_banner_1788410479439.jpg';
+import secondQuranHeroImg from '../assets/images/quran_hero_illustration_1788484620067.jpg';
 
 export default function WelcomePage() {
-  const { user, demoLogin } = useAuth();
-  const navigate = useNavigate();
+  const { user } = useAuth();
 
   // Interactive Live Quran Recitation Sample on Homepage
   const [isPlayingRecitation, setIsPlayingRecitation] = useState(false);
+  const [heroImgFailed, setHeroImgFailed] = useState(false);
+  const heroQuranSources = [firstQuranHeroImg, secondQuranHeroImg, '/quran-fallback.png'];
+  const [quranCardIdx, setQuranCardIdx] = useState(0);
   const audioRef = useRef(null);
 
-  // Hero section Qur'an image with first actual image and user-specified unsplash fallback
-  const heroQuranSources = [
-    firstQuranHeroImg,
-    'https://images.unsplash.com/photo-1761406778100-de0254ec6788?auto=format&fit=crop&fm=jpg&q=80&w=1600',
-    '/src/assets/images/quran_hero_illustration_1788484620067.jpg',
-    '/quran-fallback.png',
-  ];
-  const [heroImgIndex, setHeroImgIndex] = useState(0);
-
-  const handleHeroImgError = () => {
-    setHeroImgIndex((prev) => (prev < heroQuranSources.length - 1 ? prev + 1 : prev));
+  const handleQuranCardImgError = () => {
+    setQuranCardIdx((prev) => (prev < heroQuranSources.length - 1 ? prev + 1 : prev));
   };
 
   const sampleAyah = {
@@ -70,172 +58,137 @@ export default function WelcomePage() {
     }
   };
 
-  const handleQuickDemoLogin = async (email, redirectPath = '/discover') => {
-    await demoLogin(email);
-    navigate(redirectPath);
-  };
-
   return (
     <div className="min-h-screen flex flex-col justify-between">
-      {/* Hero Section */}
-      <section className="py-10 sm:py-16 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto text-center space-y-6">
-        {/* Open Quran & Moon Logo */}
-        <div className="flex items-center justify-center">
-          <BrandLogo size="lg" className="shadow-lg hover:scale-105 transition-transform" />
+      {/* Hero Section with Full-Bleed Holy Qur'an Background */}
+      <section className="relative overflow-hidden border-b border-[var(--border-color)] bg-gradient-to-br from-emerald-950 via-[#152212] to-stone-950">
+        {/* Background Qur'an Photograph */}
+        {!heroImgFailed && (
+          <img
+            src={heroQuranBackdrop}
+            onError={() => setHeroImgFailed(true)}
+            alt="Open illuminated Holy Qur'an on a carved wooden rehal in warm golden light"
+            className="absolute inset-0 w-full h-full object-cover object-center select-none pointer-events-none"
+            referrerPolicy="no-referrer"
+            loading="eager"
+            decoding="async"
+          />
+        )}
+
+        {/* Measured Contrast Scrim */}
+        <div
+          className="absolute inset-0 bg-gradient-to-b from-black/75 via-emerald-950/68 to-black/82 pointer-events-none"
+          aria-hidden="true"
+        />
+
+        {/* Hero Foreground Content */}
+        <div className="relative z-10 py-12 sm:py-16 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto text-center space-y-6">
+          {/* Open Quran & Moon Logo */}
+          <div className="flex items-center justify-center">
+            <BrandLogo size="lg" className="shadow-xl ring-1 ring-amber-300/30" />
+          </div>
+
+          {/* Clean Unboxed Editorial Kicker */}
+          <div className="flex items-center justify-center gap-2 text-xs sm:text-sm font-semibold text-amber-200/95 tracking-wide">
+            <BookOpen className="w-4 h-4 text-amber-300 shrink-0" />
+            <span>Holy Qur&rsquo;an Recitation &amp; Memorization Accountability</span>
+          </div>
+
+          {/* Bismillah Plaque preserving dark olive ink in light mode & emerald in dark mode */}
+          <div className="max-w-2xl mx-auto rounded-2xl bg-[#fbfbf9]/92 dark:bg-[#0f1412]/88 backdrop-blur-md border border-amber-200/60 dark:border-emerald-800/60 px-5 py-3 shadow-lg">
+            <BismillahHeader showTranslation={true} className="my-0" />
+          </div>
+
+          {/* Main Headline */}
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold text-white tracking-tight leading-[1.12] text-balance drop-shadow-sm">
+            Qur&rsquo;an Recitation &amp; Memorization{' '}
+            <span className="text-amber-300">with an Accountability Mate.</span>
+          </h1>
+
+          {/* Core Value Proposition */}
+          <p className="max-w-2xl mx-auto text-sm sm:text-lg text-stone-100/90 leading-relaxed">
+            &ldquo;Find someone else on the same journey, see when they&rsquo;re free, pair up, and keep each other accountable in recitation, revision, and daily consistency.&rdquo;
+          </p>
+
+          {/* Primary Action Buttons */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+            {user ? (
+              <Link
+                to="/dashboard"
+                className="w-full sm:w-auto px-7 py-3.5 rounded-xl text-sm font-bold bg-emerald-600 text-white hover:bg-emerald-500 shadow-lg transition-all flex items-center justify-center gap-2 whitespace-nowrap"
+              >
+                <Users className="w-4 h-4" />
+                <span>Open Dashboard</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            ) : (
+              <>
+                <Link
+                  to="/login"
+                  className="w-full sm:w-auto px-7 py-3.5 rounded-xl text-sm font-bold bg-emerald-600 text-white hover:bg-emerald-500 shadow-lg transition-all flex items-center justify-center gap-2 whitespace-nowrap"
+                >
+                  <UserCheck className="w-4 h-4" />
+                  <span>Sign In</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+                <Link
+                  to="/register"
+                  className="w-full sm:w-auto px-7 py-3.5 rounded-xl text-sm font-bold border border-amber-200/40 bg-white/12 backdrop-blur-sm text-white hover:bg-white/20 transition-all flex items-center justify-center gap-2 whitespace-nowrap"
+                >
+                  <span>Create Account</span>
+                </Link>
+              </>
+            )}
+
+            <Link
+              to="/ayah-finder"
+              className="w-full sm:w-auto px-7 py-3.5 rounded-xl text-sm font-semibold border border-white/25 bg-black/35 backdrop-blur-sm text-white hover:bg-black/50 transition-all flex items-center justify-center gap-2 whitespace-nowrap"
+            >
+              <Search className="w-4 h-4 text-amber-300" />
+              <span>Open Ayah Finder &amp; Recitation</span>
+            </Link>
+
+            <PWAInstallButton className="w-full sm:w-auto px-5 py-3.5" />
+          </div>
         </div>
+      </section>
 
-        {/* Category Pill */}
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold bg-[var(--primary-light)] text-[var(--primary)] border border-[var(--primary-border)] shadow-2xs">
-          <BookOpen className="w-3.5 h-3.5" />
-          <span>Holy Qur&rsquo;an Recitation & Memorization Accountability</span>
-        </div>
-
-        {/* Lazy Loaded Bismillah with Arabic Calligraphy & Translation */}
-        <BismillahHeader showTranslation={true} />
-
-        {/* Main Headline */}
-        <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold text-[var(--text-primary)] tracking-tight leading-[1.15]">
-          Qur&rsquo;an Recitation &amp; Memorization <br />
-          <span className="text-[var(--primary)]">with an Accountability Mate.</span>
-        </h1>
-
-        {/* Core Value Proposition */}
-        <p className="max-w-2xl mx-auto text-sm sm:text-lg text-[var(--text-secondary)] leading-relaxed">
-          &ldquo;Find someone else on the same journey, see when they&rsquo;re free, pair up, and keep each other accountable in recitation, revision, and daily consistency.&rdquo;
-        </p>
-
-        {/* Primary Action Buttons */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-          <Link
-            to="/discover"
-            className="w-full sm:w-auto px-7 py-3.5 rounded-xl text-sm font-bold bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2"
-          >
-            <Users className="w-4 h-4" />
-            <span>Find a Quran Mate</span>
-            <ArrowRight className="w-4 h-4" />
-          </Link>
-
-          <Link
-            to="/ayah-finder"
-            className="w-full sm:w-auto px-7 py-3.5 rounded-xl text-sm font-semibold border border-[var(--border-color)] bg-[var(--bg-surface)] text-[var(--text-primary)] hover:bg-[var(--bg-subtle)] hover:border-[var(--primary-border)] transition-all flex items-center justify-center gap-2"
-          >
-            <Search className="w-4 h-4 text-[var(--primary)]" />
-            <span>Open Ayah Finder &amp; Recitation</span>
-          </Link>
-
-          <Link
-            to="/tracker"
-            className="w-full sm:w-auto px-6 py-3.5 rounded-xl text-sm font-semibold border border-emerald-300 dark:border-emerald-800 bg-emerald-50/60 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 transition-all flex items-center justify-center gap-2"
-          >
-            <CalendarCheck className="w-4 h-4 text-emerald-600" />
-            <span>Daily Tracker</span>
-          </Link>
-
-          <PWAInstallButton className="w-full sm:w-auto px-5 py-3.5" />
-        </div>
-
-        {/* Hero Visual Section: Holy Quran on Rehal with Soft Illumination */}
-        <div className="relative mx-auto max-w-4xl rounded-3xl overflow-hidden border border-emerald-200/80 dark:border-emerald-900/60 shadow-xl group mt-4 bg-gradient-to-br from-emerald-950 via-emerald-900 to-teal-950 text-white min-h-[340px] sm:min-h-[400px] flex items-center justify-center p-6 sm:p-10">
-          {/* Radiant gold ambient lighting */}
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(250,204,21,0.22),transparent_65%)] pointer-events-none" />
+      {/* Featured Holy Qur'an on Rehal & Prophetic Tradition (Hadith) */}
+      <section className="pt-10 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto w-full">
+        <div className="relative rounded-3xl overflow-hidden border border-emerald-200/80 dark:border-emerald-900/60 shadow-xl group bg-gradient-to-br from-emerald-950 via-emerald-900 to-teal-950 text-white min-h-[340px] sm:min-h-[390px] flex items-center justify-center p-6 sm:p-10">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(250,204,21,0.2),transparent_65%)] pointer-events-none" />
           <div className="absolute inset-0 bg-emerald-950/30 pointer-events-none" />
 
-          <div className="relative z-10 flex flex-col items-center text-center max-w-2xl py-4">
-            {heroQuranSources[heroImgIndex] ? (
+          <div className="relative z-10 flex flex-col items-center text-center max-w-2xl py-2">
+            {heroQuranSources[quranCardIdx] && (
               <img
-                src={heroQuranSources[heroImgIndex] || null}
-                onError={handleHeroImgError}
-                alt="Holy Qur'an"
-                className="max-h-56 sm:max-h-72 w-auto object-contain filter drop-shadow-[0_20px_35px_rgba(0,0,0,0.65)] transform group-hover:scale-105 transition-transform duration-700 select-none"
+                src={heroQuranSources[quranCardIdx]}
+                onError={handleQuranCardImgError}
+                alt="Illuminated Holy Qur'an open on wooden rehal"
+                className="max-h-56 sm:max-h-72 w-auto object-contain rounded-2xl filter drop-shadow-[0_20px_35px_rgba(0,0,0,0.65)] transform group-hover:scale-[1.03] transition-transform duration-500 select-none"
                 referrerPolicy="no-referrer"
                 loading="eager"
+                decoding="async"
               />
-            ) : null}
-            <div className="mt-5">
-              <div className="inline-flex items-center gap-2 text-xs font-semibold text-emerald-300 mb-2 px-3 py-1 rounded-full bg-emerald-900/80 border border-emerald-500/40 shadow-xs backdrop-blur-xs">
-                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                <span>Prophetic Tradition (Hadith)</span>
+            )}
+            <div className="mt-5 space-y-1.5">
+              <div className="text-xs font-semibold text-amber-300 tracking-wide uppercase">
+                Prophetic Tradition (Hadith)
               </div>
               <p className="font-serif text-base sm:text-xl font-medium leading-snug drop-shadow-md text-amber-100">
                 &ldquo;The best of you are those who learn the Qur&rsquo;an and teach it.&rdquo;
               </p>
-              <div className="text-[11px] sm:text-xs text-emerald-200/85 mt-1.5 font-mono">
-                — Sahih al-Bukhari 5027
+              <div className="text-[11px] sm:text-xs text-emerald-200/85 font-mono">
+                Sahih al-Bukhari 5027
               </div>
             </div>
           </div>
         </div>
+      </section>
 
-        {/* Guided Interactive Journey / Demo Profiles */}
-        <div className="mt-8 p-5 sm:p-6 rounded-3xl border border-emerald-200 dark:border-emerald-900/60 bg-gradient-to-r from-emerald-50/70 via-emerald-50/40 to-teal-50/50 dark:from-emerald-950/20 dark:to-teal-950/20 text-left shadow-xs">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-emerald-200/70 dark:border-emerald-900/40 pb-3 mb-4">
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-              <h3 className="text-xs sm:text-sm font-bold text-emerald-950 dark:text-emerald-200">
-                Explore Learner Profiles &amp; Sisterhood Journeys
-              </h3>
-            </div>
-            <span className="text-[11px] text-emerald-800 dark:text-emerald-300 font-medium">
-              Experience the app from different learner perspectives:
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <button
-              onClick={() => handleQuickDemoLogin('maryam@quranmate.demo', '/discover')}
-              className="p-3 rounded-2xl border border-emerald-200 dark:border-emerald-800 bg-white/80 dark:bg-zinc-900/80 hover:border-[var(--primary)] text-left transition-all shadow-2xs group"
-            >
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-bold text-[var(--text-primary)] group-hover:text-[var(--primary)]">
-                  Maryam Al-Fassi
-                </span>
-                <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-200 font-semibold">
-                  Juz 1–5
-                </span>
-              </div>
-              <p className="text-[11px] text-[var(--text-muted)]">
-                Browse learners, view Fatima&rsquo;s availability, and send a study partner request.
-              </p>
-            </button>
-
-            <button
-              onClick={() => handleQuickDemoLogin('fatimah@quranmate.demo', '/requests')}
-              className="p-3 rounded-2xl border border-emerald-200 dark:border-emerald-800 bg-white/80 dark:bg-zinc-900/80 hover:border-[var(--primary)] text-left transition-all shadow-2xs group"
-            >
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-bold text-[var(--text-primary)] group-hover:text-[var(--primary)]">
-                  Fatimah Zahra
-                </span>
-                <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-200 font-semibold">
-                  Revision
-                </span>
-              </div>
-              <p className="text-[11px] text-[var(--text-muted)]">
-                Manage partner invitations, review requests, and coordinate mutual revision.
-              </p>
-            </button>
-
-            <button
-              onClick={() => handleQuickDemoLogin('aisha@quranmate.demo', '/partnership')}
-              className="p-3 rounded-2xl border border-emerald-200 dark:border-emerald-800 bg-white/80 dark:bg-zinc-900/80 hover:border-[var(--primary)] text-left transition-all shadow-2xs group"
-            >
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-bold text-[var(--text-primary)] group-hover:text-[var(--primary)]">
-                  Active Partnership
-                </span>
-                <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-teal-100 dark:bg-teal-900/50 text-teal-800 dark:text-teal-200 font-semibold">
-                  Paired Room
-                </span>
-              </div>
-              <p className="text-[11px] text-[var(--text-muted)]">
-                Shared memorization goal, daily dual check-ins, streak counter, and partner discussion.
-              </p>
-            </button>
-          </div>
-        </div>
-
-        {/* Live Quran Recitation Featurette Card */}
-        <div className="mt-8 rounded-3xl border border-[var(--border-color)] bg-[var(--bg-surface)] p-6 text-left shadow-sm space-y-4">
+      {/* Live Quran Recitation Featurette Card */}
+      <section className="py-8 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto w-full">
+        <div className="rounded-3xl border border-[var(--border-color)] bg-[var(--bg-surface)] p-6 text-left shadow-sm space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[var(--border-subtle)] pb-3">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-950 text-emerald-600 flex items-center justify-center">

@@ -23,6 +23,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 import WeeklyProgressChart from '../components/WeeklyProgressChart.jsx';
 import SessionScheduler from '../components/SessionScheduler.jsx';
 import BismillahLoader from '../components/BismillahLoader.jsx';
+import MemorizationProgressCard from '../components/MemorizationProgressCard.jsx';
 
 export default function DailyTrackerPage() {
   const { user } = useAuth();
@@ -296,6 +297,9 @@ export default function DailyTrackerPage() {
           </p>
         </div>
       </div>
+
+      {/* Comprehensive Memorization Progress Bar & Ayahs Committed */}
+      <MemorizationProgressCard onProgressUpdate={loadTrackerData} />
 
       {/* Weekly Progress Chart (Recharts) - Verses Memorized vs. Reviewed */}
       <WeeklyProgressChart data={summary?.weeklyProgress} />

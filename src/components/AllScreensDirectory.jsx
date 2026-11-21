@@ -37,8 +37,8 @@ export const SCREEN_SECTIONS = [
         name: 'Main Home / Welcome',
         path: '/welcome',
         icon: Home,
-        description: 'Landing page with Quran hero visual, hadiths, demo accounts & features',
-        badge: 'Public & Demo',
+        description: 'Landing page with Quran hero visual, prophetic traditions & platform features',
+        badge: 'Public',
         color: 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800',
       },
       {

@@ -1,6 +1,4 @@
 // Quran Mate 🌙 Full-Stack Server Entry Point
-import 'dotenv/config';
-import fs from 'fs';
 import path from 'path';
 import http from 'http';
 import express from 'express';
@@ -12,9 +10,7 @@ import { seedDatabase } from './server/database/seed.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// In Google AI Studio sandbox container, the dev server must bind to port 3000 for internal reverse-proxy routing.
-// In external deployments (such as Render where PORT=10000), dynamically bind to process.env.PORT.
-const PORT = process.env.APPLET_ID ? 3000 : (process.env.PORT ? parseInt(process.env.PORT, 10) : 3000);
+const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 const HOST = '0.0.0.0';
 
 async function startServer() {
@@ -27,9 +23,9 @@ async function startServer() {
     console.error('Database initialization error:', err);
   }
 
-  // 2. Instantiate Express App and HTTP server
+  // 2. Instantiate Express App & HTTP Server
   const app = createApp();
-  const server = http.createServer(app);
+  const httpServer = http.createServer(app);
 
   // 3. Mount Frontend Handling (Vite in Dev, Static Files in Production)
   if (process.env.NODE_ENV !== 'production') {
@@ -37,29 +33,22 @@ async function startServer() {
     const vite = await createViteServer({
       server: {
         middlewareMode: true,
-        allowedHosts: true,
-        hmr: { server },
+        hmr: { server: httpServer },
+        watch: process.env.DISABLE_HMR === 'true' ? null : {},
       },
       appType: 'spa',
     });
     app.use(vite.middlewares);
   } else {
     const distPath = path.resolve(__dirname, 'dist');
-    if (fs.existsSync(distPath)) {
-      app.use(express.static(distPath));
-    }
+    app.use(express.static(distPath, { maxAge: '7d', etag: true }));
     app.get('*', (req, res) => {
-      const indexPath = path.join(distPath, 'index.html');
-      if (fs.existsSync(indexPath)) {
-        res.sendFile(indexPath);
-      } else {
-        res.status(200).send('<!doctype html><html><body><h1>Quran Mate 🌙 Web Service Ready</h1><p>Static assets are loading. Please refresh.</p></body></html>');
-      }
+      res.sendFile(path.join(distPath, 'index.html'));
     });
   }
 
   // 4. Start HTTP Server
-  server.listen(PORT, HOST, () => {
+  httpServer.listen(PORT, HOST, () => {
     console.log(`Quran Mate 🌙 server running on http://${HOST}:${PORT}`);
   });
 }
